@@ -198,8 +198,7 @@ fn force_break<'s>(
     let segments: Vec<_> = s.s
     .chars()
     .map(|c| c.to_string())
-    .collect();        
-    
+    .collect();
     let idx: usize = segments
         .iter()
         .scan(Mm(0.0), |acc, t| {
@@ -208,12 +207,13 @@ fn force_break<'s>(
         })
         .position(|w| w + mark_width > width)
         .unwrap_or_default();
-    if idx > 0 {
-        let start = s.s[0..idx].to_owned();
-        let end = s.s[idx..segments.len()].to_owned(); 
+    let indices = s.s.char_indices().map(|(i, _)| i).collect::<Vec<usize>>();
+    if idx > 0 {        
+        let start = s.s[indices[0]..indices[idx]].to_owned();
+        let end = s.s[indices[idx]..].to_owned(); 
         
         end_elide = style::StyledCow::new(end, s.style);
-        let new_segments = &s.s[idx..segments.len()];
+        let new_segments = &s.s[indices[idx]..];
         let new_segments: Vec<_> = new_segments
                                 .chars()
                                 .map(|c| c.to_string())
@@ -221,7 +221,7 @@ fn force_break<'s>(
         let mut oidx = get_idx_width(context, s, width, elide_width, &new_segments);
         
         if oidx > 0 {                       
-            let end = s.s[idx..idx + oidx].to_owned() + elide;
+            let end = s.s[indices[idx]..indices[idx + oidx]].to_owned() + elide;
             end_elide = style::StyledCow::new(end, s.style);           
         }
         Some((
