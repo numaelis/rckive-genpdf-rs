@@ -1,3 +1,13 @@
+# v0.4.1 (2025-11-03)
+
+- Add Improvements: In paragraphs, force the word to be split in two and apply elide if necessary. 
+  Sometimes hyphenation doesn't solve the problem. 
+  This is to avoid the "Page overflowed while trying to wrap a string" error as much as possible. 
+- Update printpdf to 0.7.0
+- fix image alpha
+- add image from_base64
+- add render to_base64
+
 # Unreleased
 
 ## Breaking Changes
