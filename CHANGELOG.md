@@ -3,10 +3,12 @@
 - Add Improvements: In paragraphs, force the word to be split in two and apply elide if necessary. 
   Sometimes hyphenation doesn't solve the problem. 
   This is to avoid the "Page overflowed while trying to wrap a string" error as much as possible. 
-- Update printpdf to 0.7.0
-- fix image alpha
-- add image from_base64
-- add render to_base64
+- Update printpdf to 0.7.0.
+- fix image alpha.
+- add image from_base64.
+- add render to_base64.
+- add Auto fit font size in Paragraph: fit size minimum And if that doesn't work, cut and elide.
+- add skip_warning_overflowed: Skip the page size exceeded warning when the paragraph exceeds the layout.
 
 # Unreleased
 

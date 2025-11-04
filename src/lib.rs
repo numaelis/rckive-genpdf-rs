@@ -578,7 +578,10 @@ impl Document {
             modification_date: None,
         }
     }
-
+    // Skip the page size exceeded warning
+    pub fn set_skip_warning_overflowed(&mut self, skip: bool){
+        self.context.skip_warning_overflowed = skip;
+    }        
     /// Adds the given font family to the font cache for this document and returns a reference to
     /// it.
     ///
@@ -961,12 +964,14 @@ pub struct Context {
     /// If this field is `None`, hyphenation is disabled.
     #[cfg(feature = "hyphenation")]
     pub hyphenator: Option<hyphenation::Standard>,
+    
+    pub skip_warning_overflowed: bool,
 }
 
 impl Context {
     #[cfg(not(feature = "hyphenation"))]
     fn new(font_cache: fonts::FontCache) -> Context {
-        Context { font_cache }
+        Context { font_cache, skip_warning_overflowed: false,}
     }
 
     #[cfg(feature = "hyphenation")]
@@ -974,6 +979,7 @@ impl Context {
         Context {
             font_cache,
             hyphenator: None,
+            skip_warning_overflowed: false,
         }
     }
 }
