@@ -56,18 +56,22 @@ impl<'c, 's, I: Iterator<Item = style::StyledStr<'s>>> Iterator for Wrapper<'c, 
                 let s1 = if let Some((start, end)) = split(self.context, s, self.width - self.x) {
                     // Calculate the number of bytes that we added to the string when splitting it
                     // (for the hyphen, if required).
-                    delta = start.s.len() + end.s.len() - s.s.len();
-                    self.buf.push(start);
+                    //Choose either Hyphen or Force; you can't choose both. avoid mixing both
                     width = end.width(&self.context.font_cache);
-                    end
+                    if width > self.width {
+                        s.into()
+                    }else{
+                        delta = start.s.len() + end.s.len() - s.s.len();
+                        self.buf.push(start);
+                        end                        
+                    }                                       
                 } else {
                     s.into()
                 };
 
                 if width > self.width {
-                    let mut delta = 0;
-                    // force the word to be split in two and apply elide if necessary
-                    let s1 = if let Some((start, end)) = force_break(self.context, s, self.width - self.x) {                        
+                    let mut delta = 0;                   
+                    let s2 = if let Some((start, end)) = force_break(self.context, s , self.width - self.x) {                        
                         delta = start.s.len() + end.s.len() - s.s.len();
                         self.buf.push(start);
                         width = end.width(&self.context.font_cache);
@@ -75,17 +79,17 @@ impl<'c, 's, I: Iterator<Item = style::StyledStr<'s>>> Iterator for Wrapper<'c, 
                     } else {
                         s.into()
                     };                        
-                    if width > self.width {
-                        
+                    if width > self.width {                        
                         // The remainder of the word is longer than the current page – we will never be
                         // able to render it completely.
-                        // TODO: handle gracefully, emit warning
+                        // TODO: handle gracefully, emit warning                        
                         self.has_overflowed = true;
+                        
                         return None;                        
                     }   
                     // Return the current line and add the word that did not fit to the next line
                     let v = std::mem::take(&mut self.buf);
-                    self.buf.push(s1);
+                    self.buf.push(s2);
                     self.x = width;
                     return Some((v, delta));                    
                 }
@@ -181,7 +185,7 @@ fn get_idx_width<'s>(
     idx
 }
 
-//force the word to be split in two and apply elide if necessary
+//force the word to be split in two and apply elide if necessary or fit size minimum
 fn force_break<'s>(
     context: &Context,
     s: style::StyledStr<'s>,
@@ -208,26 +212,75 @@ fn force_break<'s>(
         .position(|w| w + mark_width > width)
         .unwrap_or_default();
     let indices = s.s.char_indices().map(|(i, _)| i).collect::<Vec<usize>>();
-    if idx > 0 {        
-        let start = s.s[indices[0]..indices[idx]].to_owned();
-        let end = s.s[indices[idx]..].to_owned(); 
-        
-        end_elide = style::StyledCow::new(end, s.style);
-        let new_segments = &s.s[indices[idx]..];
-        let new_segments: Vec<_> = new_segments
-                                .chars()
-                                .map(|c| c.to_string())
-                                .collect();    
-        let mut oidx = get_idx_width(context, s, width, elide_width, &new_segments);
-        
-        if oidx > 0 {                       
-            let end = s.s[indices[idx]..indices[idx + oidx]].to_owned() + elide;
-            end_elide = style::StyledCow::new(end, s.style);           
+    if idx > 0 {
+        let size_fit = s.style.fit_font_size_to();
+        let size_font = s.style.font_size();
+        if size_fit > 0 && size_fit < size_font{
+            //Adjust the size to a minimum value if it is exceeded in the layout.
+            let mut size_down = size_font - 1;
+            let mut oidx = 0;
+            let mut style_down = s.style.clone();
+            let mut pass = false;
+            while size_down >= size_fit {
+                style_down.set_font_size(size_down);
+                oidx = get_idx_width(context, style::StyledStr::new(s.s, style_down), width, mark_width, &segments);           
+                if oidx == 0 {
+                    pass = true;
+                    break;
+                }
+                size_down-=1;
+            }
+            if pass {
+                return Some((
+                    style::StyledCow::new(s.s.to_owned(), style_down),
+                    style::StyledCow::new("".to_owned(), style_down),
+                ));
+            }else{    
+                //If fit failed, use force cut
+                let newidx = get_idx_width(context, style::StyledStr::new(s.s, style_down), width, mark_width, &segments);
+                let start = s.s[indices[0]..indices[newidx]].to_owned();
+                let end = s.s[indices[newidx]..].to_owned(); 
+                
+                end_elide = style::StyledCow::new(end, style_down);
+                let new_segments = &s.s[indices[newidx]..];
+                let new_segments: Vec<_> = new_segments
+                                        .chars()
+                                        .map(|c| c.to_string())
+                                        .collect();    
+                let mut oidx = get_idx_width(context, style::StyledStr::new(s.s, style_down), width, elide_width, &new_segments);
+                
+                if oidx > 0 {                       
+                    let end = s.s[indices[newidx]..indices[newidx + oidx]].to_owned() + elide;
+                    end_elide = style::StyledCow::new(end, style_down);           
+                }
+                Some((
+                    style::StyledCow::new(start, style_down),
+                    end_elide,
+                ))
+            }
+
+        }else{
+            //use force cut
+            let start = s.s[indices[0]..indices[idx]].to_owned();
+            let end = s.s[indices[idx]..].to_owned(); 
+            
+            end_elide = style::StyledCow::new(end, s.style);
+            let new_segments = &s.s[indices[idx]..];
+            let new_segments: Vec<_> = new_segments
+                                    .chars()
+                                    .map(|c| c.to_string())
+                                    .collect();    
+            let mut oidx = get_idx_width(context, s, width, elide_width, &new_segments);
+            
+            if oidx > 0 {                       
+                let end = s.s[indices[idx]..indices[idx + oidx]].to_owned() + elide;
+                end_elide = style::StyledCow::new(end, s.style);           
+            }
+            Some((
+                style::StyledCow::new(start, s.style),
+                end_elide,
+            ))
         }
-        Some((
-            style::StyledCow::new(start, s.style),
-            end_elide,
-        ))
     } else {
         None
     }

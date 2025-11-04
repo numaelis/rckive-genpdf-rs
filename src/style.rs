@@ -110,6 +110,7 @@ pub struct Style {
     color: Option<Color>,
     is_bold: bool,
     is_italic: bool,
+    fit_font_size_to: Option<u8>,
 }
 
 impl Style {
@@ -135,6 +136,9 @@ impl Style {
         }
         if style.is_italic {
             self.is_italic = true;
+        }
+        if let Some(fit_font_size_to) = style.fit_font_size_to {
+            self.fit_font_size_to = Some(fit_font_size_to);
         }
     }
 
@@ -167,6 +171,10 @@ impl Style {
     /// Returns the font size for this style in points, or 12 if no font size is set.
     pub fn font_size(&self) -> u8 {
         self.font_size.unwrap_or(12)
+    }
+    
+    pub fn fit_font_size_to(&self) -> u8 {
+        self.fit_font_size_to.unwrap_or(0)
     }
 
     /// Returns the line spacing factor for this style, or 1 if no line spacing factor is set.
@@ -226,6 +234,17 @@ impl Style {
     /// Sets the font size in points for this style and returns it.
     pub fn with_font_size(mut self, font_size: u8) -> Style {
         self.set_font_size(font_size);
+        self
+    }
+    
+    /// Sets the font size in points for this style.
+    pub fn set_fit_font_size_to(&mut self, font_size: u8) {
+        self.fit_font_size_to = Some(font_size);
+    }
+
+    /// Sets the font size in points for this style and returns it.
+    pub fn with_fit_font_size_to(mut self, font_size: u8) -> Style {
+        self.set_fit_font_size_to(font_size);
         self
     }
 
