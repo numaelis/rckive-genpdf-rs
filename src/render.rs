@@ -382,6 +382,16 @@ impl<'p> Layer<'p> {
             self.data.layer.set_outline_color(color.into());
         }
     }
+    
+    fn set_line_dash_pattern(&self, dash: i64) {
+        if self.data.update_outline_dash(dash) {
+            let dash_pattern = printpdf::LineDashPattern {
+                dash_1: Some(dash),
+                ..Default::default()
+            };
+            self.data.layer.set_line_dash_pattern(dash_pattern);
+        }
+    }
 
     fn set_text_cursor(&self, cursor: LayerPosition) {
         let cursor = self.transform_position(cursor);
@@ -433,6 +443,7 @@ struct LayerData {
     fill_color: cell::Cell<Color>,
     outline_color: cell::Cell<Color>,
     outline_thickness: cell::Cell<Mm>,
+    outline_dash: cell::Cell<Option<i64>>,
 }
 
 impl LayerData {
@@ -448,6 +459,10 @@ impl LayerData {
     pub fn update_outline_thickness(&self, thickness: Mm) -> bool {
         self.outline_thickness.replace(thickness) != thickness
     }
+    
+    pub fn update_outline_dash(&self, dash: i64) -> bool {
+        self.outline_dash.replace(Some(dash)) != Some(dash)
+    }
 }
 
 impl From<printpdf::PdfLayerReference> for LayerData {
@@ -457,6 +472,7 @@ impl From<printpdf::PdfLayerReference> for LayerData {
             fill_color: Color::Rgb(0, 0, 0).into(),
             outline_color: Color::Rgb(0, 0, 0).into(),
             outline_thickness: Mm::from(printpdf::Pt(1.0)).into(),
+            outline_dash: Some(0).into(),
         }
     }
 }
@@ -587,6 +603,7 @@ impl<'p> Area<'p> {
     {
         self.layer.set_outline_thickness(line_style.thickness());
         self.layer.set_outline_color(line_style.color());
+        self.layer.set_line_dash_pattern(line_style.dash());                   
         self.layer
             .add_line_shape(points.into_iter().map(|pos| self.position(pos)));
     }

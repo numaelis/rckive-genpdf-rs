@@ -581,6 +581,7 @@ impl<'s> From<StyledString> for StyledCow<'s> {
 pub struct LineStyle {
     thickness: Mm,
     color: Color,
+    dash: Option<i64>,
 }
 
 impl Default for LineStyle {
@@ -588,6 +589,7 @@ impl Default for LineStyle {
         LineStyle {
             thickness: Mm::from(0.1),
             color: Color::Rgb(0, 0, 0),
+            dash: Some(0),
         }
     }
 }
@@ -643,5 +645,21 @@ impl LineStyle {
     /// Returns the line color.
     pub fn color(&self) -> Color {
         self.color
+    }
+    
+    /// Sets the dash.
+    pub fn set_dash(&mut self, dash: i64) {
+        self.dash = Some(dash);
+    }
+
+    /// Sets the dash and returns the line style.
+    pub fn with_dash(mut self, dash: i64) -> Self {
+        self.set_dash(dash);
+        self
+    }
+
+    /// Returns the dash.
+    pub fn dash(&self) -> i64 {
+        self.dash.unwrap_or(0)        
     }
 }
