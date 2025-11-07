@@ -384,12 +384,16 @@ impl<'p> Layer<'p> {
     }
     
     fn set_line_dash_pattern(&self, dash: i64) {
-        if self.data.update_outline_dash(dash) {
-            let dash_pattern = printpdf::LineDashPattern {
-                dash_1: Some(dash),
-                ..Default::default()
-            };
-            self.data.layer.set_line_dash_pattern(dash_pattern);
+        if self.data.update_outline_dash(dash) {            
+            if dash > 0 {
+                let dash_pattern = printpdf::LineDashPattern {
+                    dash_1: Some(dash),
+                    ..Default::default()
+                };
+                self.data.layer.set_line_dash_pattern(dash_pattern);
+            }else{
+                self.data.layer.set_line_dash_pattern(printpdf::LineDashPattern::default());
+            }
         }
     }
 
