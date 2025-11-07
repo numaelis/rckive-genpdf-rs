@@ -635,6 +635,10 @@ pub struct FramedElement<E: Element> {
     element: E,
     is_first: bool,
     line_style: LineStyle,
+    left: bool,
+    right: bool,
+    top: bool,
+    bottom: bool,
 }
 
 impl<E: Element> FramedElement<E> {
@@ -650,6 +654,22 @@ impl<E: Element> FramedElement<E> {
             is_first: true,
             element,
             line_style: line_style.into(),
+            left: true,
+            right: true,
+            top: true,
+            bottom: true,
+        }
+    }
+    
+    pub fn with_line_style_trbl(element: E, line_style: impl Into<LineStyle>, t: bool, r: bool, b: bool, l: bool) -> FramedElement<E> {
+        Self {
+            is_first: true,
+            element,
+            line_style: line_style.into(),
+            left: l,
+            right: r,
+            top: t,
+            bottom: b,
         }
     }
 }
@@ -698,20 +718,49 @@ impl<E: Element> Element for FramedElement<E> {
 
         if self.is_first {
             result.size.height += line_thickness;
-            frame_area.draw_line(
-                vec![bottom_right, top_right, top_left, bottom_left],
-                self.line_style,
-            );
+            if self.right == true && self.left == true && self.top == true && self.bottom == true{
+                frame_area.draw_line(
+                    vec![bottom_right, top_right, top_left, bottom_left],
+                    self.line_style,
+                );
+            }else{
+                if self.right {
+                    frame_area.draw_line(vec![bottom_right, top_right], self.line_style);                    
+                }
+                if self.top {
+                    frame_area.draw_line(vec![top_right, top_left], self.line_style);
+                }
+                if self.left {
+                    frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
+                }
+            }
+            
         }
         if !result.has_more {
             result.size.height += line_thickness;
-            frame_area.draw_line(
-                vec![top_left, bottom_left, bottom_right, top_right],
-                self.line_style,
-            );
+            if self.right == true && self.left == true && self.top == true && self.bottom == true{
+                frame_area.draw_line(
+                    vec![top_left, bottom_left, bottom_right, top_right],
+                    self.line_style,
+                );
+            }else{
+                if self.left {
+                    frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
+                }
+                if self.bottom {
+                    frame_area.draw_line(vec![bottom_left, bottom_right], self.line_style);
+                }
+                if self.right {
+                    frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
+                }
+            }
         } else {
-            frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
-            frame_area.draw_line(vec![top_right, bottom_right], self.line_style);
+            if self.left {
+                frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
+            }
+            if self.right{
+                frame_area.draw_line(vec![top_right, bottom_right], self.line_style);
+            }
         }
 
         self.is_first = false;
