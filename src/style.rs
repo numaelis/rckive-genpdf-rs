@@ -172,7 +172,7 @@ impl Style {
     pub fn font_size(&self) -> u8 {
         self.font_size.unwrap_or(12)
     }
-    
+    /// Set autofit size to minimum size
     pub fn fit_font_size_to(&self) -> u8 {
         self.fit_font_size_to.unwrap_or(0)
     }
@@ -582,6 +582,9 @@ pub struct LineStyle {
     thickness: Mm,
     color: Color,
     dash: Option<i64>,
+    gap: Option<i64>,
+    dash2: Option<i64>,
+    gap2: Option<i64>,
 }
 
 impl Default for LineStyle {
@@ -590,6 +593,9 @@ impl Default for LineStyle {
             thickness: Mm::from(0.1),
             color: Color::Rgb(0, 0, 0),
             dash: Some(0),
+            gap: Some(0),
+            dash2: Some(0),
+            gap2: Some(0),
         }
     }
 }
@@ -661,5 +667,53 @@ impl LineStyle {
     /// Returns the dash.
     pub fn dash(&self) -> i64 {
         self.dash.unwrap_or(0)        
+    }
+    
+    /// Sets the dash2.
+    pub fn set_dash2(&mut self, dash: i64) {
+        self.dash2 = Some(dash);
+    }
+
+    /// Sets the dash2 and returns the line style.
+    pub fn with_dash2(mut self, dash: i64) -> Self {
+        self.set_dash2(dash);
+        self
+    }
+
+    /// Returns the dash2.
+    pub fn dash2(&self) -> i64 {
+        self.dash2.unwrap_or(0)        
+    }
+    
+    /// Sets the gap.
+    pub fn set_gap(&mut self, gap: i64) {
+        self.gap = Some(gap);
+    }
+
+    /// Sets the gap and returns the line style.
+    pub fn with_gap(mut self, gap: i64) -> Self {
+        self.set_gap(gap);
+        self
+    }
+
+    /// Returns the gap.
+    pub fn gap(&self) -> i64 {
+        self.gap.unwrap_or(0)        
+    }
+    
+    /// Sets the gap2.
+    pub fn set_gap2(&mut self, gap: i64) {
+        self.gap2 = Some(gap);
+    }
+
+    /// Sets the gap and returns the line style.
+    pub fn with_gap2(mut self, gap: i64) -> Self {
+        self.set_gap2(gap);
+        self
+    }
+
+    /// Returns the gap.
+    pub fn gap2(&self) -> i64 {
+        self.gap2.unwrap_or(0)        
     }
 }
