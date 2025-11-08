@@ -383,11 +383,16 @@ impl<'p> Layer<'p> {
         }
     }
     
-    fn set_line_dash_pattern(&self, dash: i64) {
-        if self.data.update_outline_dash(dash) {            
+    fn set_line_dash_pattern(&self, dash: i64, gap: i64, dash2: i64, gap2: i64) {
+        if self.data.update_outline_dash(dash, gap, dash2, gap2) {            
             if dash > 0 {
+                let gap = if gap == 0 {dash}else{gap};
+                let gap2 = if gap2 == 0 {dash2}else{gap2};
                 let dash_pattern = printpdf::LineDashPattern {
                     dash_1: Some(dash),
+                    gap_1: Some(gap),
+                    dash_2: Some(dash2),
+                    gap_2: Some(gap2),
                     ..Default::default()
                 };
                 self.data.layer.set_line_dash_pattern(dash_pattern);
@@ -448,6 +453,9 @@ struct LayerData {
     outline_color: cell::Cell<Color>,
     outline_thickness: cell::Cell<Mm>,
     outline_dash: cell::Cell<Option<i64>>,
+    outline_gap: cell::Cell<Option<i64>>,
+    outline_dash2: cell::Cell<Option<i64>>,
+    outline_gap2: cell::Cell<Option<i64>>,
 }
 
 impl LayerData {
@@ -464,8 +472,11 @@ impl LayerData {
         self.outline_thickness.replace(thickness) != thickness
     }
     
-    pub fn update_outline_dash(&self, dash: i64) -> bool {
-        self.outline_dash.replace(Some(dash)) != Some(dash)
+    pub fn update_outline_dash(&self, dash: i64, gap: i64, dash2: i64, gap2:i64) -> bool {        
+        let _ = self.outline_dash2.replace(Some(dash2)) != Some(dash2);
+        let _ = self.outline_gap.replace(Some(gap)) != Some(gap);
+        let _ = self.outline_gap2.replace(Some(gap2)) != Some(gap2);
+        return self.outline_dash.replace(Some(dash)) != Some(dash);
     }
 }
 
@@ -477,6 +488,9 @@ impl From<printpdf::PdfLayerReference> for LayerData {
             outline_color: Color::Rgb(0, 0, 0).into(),
             outline_thickness: Mm::from(printpdf::Pt(1.0)).into(),
             outline_dash: Some(0).into(),
+            outline_gap: Some(0).into(),
+            outline_dash2: Some(0).into(),
+            outline_gap2: Some(0).into(),
         }
     }
 }
@@ -607,7 +621,7 @@ impl<'p> Area<'p> {
     {
         self.layer.set_outline_thickness(line_style.thickness());
         self.layer.set_outline_color(line_style.color());
-        self.layer.set_line_dash_pattern(line_style.dash());                   
+        self.layer.set_line_dash_pattern(line_style.dash(), line_style.gap(), line_style.dash2(), line_style.gap2());                   
         self.layer
             .add_line_shape(points.into_iter().map(|pos| self.position(pos)));
     }

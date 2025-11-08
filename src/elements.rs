@@ -660,7 +660,8 @@ impl<E: Element> FramedElement<E> {
             bottom: true,
         }
     }
-    
+    ///Creates a new framed element that wraps the given element,
+    /// and with the given line style and top, right, bottom, left 
     pub fn with_line_style_trbl(element: E, line_style: impl Into<LineStyle>, t: bool, r: bool, b: bool, l: bool) -> FramedElement<E> {
         Self {
             is_first: true,
@@ -725,12 +726,18 @@ impl<E: Element> Element for FramedElement<E> {
                 );
             }else{
                 if self.right {
+                    let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
+                    let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
                     frame_area.draw_line(vec![bottom_right, top_right], self.line_style);                    
                 }
                 if self.top {
+                    let top_right = Position::new(frame_area.size().width + line_offset, 0);
+                    let top_left = Position::new(line_offset*-1.0, 0);
                     frame_area.draw_line(vec![top_right, top_left], self.line_style);
                 }
                 if self.left {
+                    let top_left = Position::new(0, line_offset*-1.0);
+                    let bottom_left = Position::new(0, frame_area.size().height + line_offset);
                     frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
                 }
             }
@@ -745,12 +752,18 @@ impl<E: Element> Element for FramedElement<E> {
                 );
             }else{
                 if self.left {
+                    let top_left = Position::new(0, line_offset*-1.0);
+                    let bottom_left = Position::new(0, frame_area.size().height + line_offset);
                     frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
                 }
                 if self.bottom {
+                    let bottom_left = Position::new(line_offset*-1.0, frame_area.size().height);
+                    let bottom_right = Position::new(frame_area.size().width + line_offset, frame_area.size().height);
                     frame_area.draw_line(vec![bottom_left, bottom_right], self.line_style);
                 }
                 if self.right {
+                    let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
+                    let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
                     frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
                 }
             }

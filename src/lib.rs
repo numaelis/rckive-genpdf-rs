@@ -578,7 +578,7 @@ impl Document {
             modification_date: None,
         }
     }
-    // Skip the page size exceeded warning
+    /// Skip the page size exceeded warning
     pub fn set_skip_warning_overflowed(&mut self, skip: bool){
         self.context.skip_warning_overflowed = skip;
     }        
@@ -747,7 +747,7 @@ impl Document {
             .with_context(|| format!("Could not create file {}", path.display()))?;
         self.render(file)
     }
-    
+    /// render to base64
     pub fn render_to_base64(self) -> Result<String, error::Error> {
         let mut buffer = Vec::new(); 
         self.render(&mut buffer)?; 
@@ -964,7 +964,7 @@ pub struct Context {
     /// If this field is `None`, hyphenation is disabled.
     #[cfg(feature = "hyphenation")]
     pub hyphenator: Option<hyphenation::Standard>,
-    
+    /// skip warning
     pub skip_warning_overflowed: bool,
 }
 

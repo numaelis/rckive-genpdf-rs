@@ -247,7 +247,7 @@ fn force_break<'s>(
                                         .chars()
                                         .map(|c| c.to_string())
                                         .collect();    
-                let mut oidx = get_idx_width(context, style::StyledStr::new(s.s, style_down), width, elide_width, &new_segments);
+                let oidx = get_idx_width(context, style::StyledStr::new(s.s, style_down), width, elide_width, &new_segments);
                 
                 if oidx > 0 {                       
                     let end = s.s[indices[newidx]..indices[newidx + oidx]].to_owned() + elide;
@@ -270,7 +270,7 @@ fn force_break<'s>(
                                     .chars()
                                     .map(|c| c.to_string())
                                     .collect();    
-            let mut oidx = get_idx_width(context, s, width, elide_width, &new_segments);
+            let oidx = get_idx_width(context, s, width, elide_width, &new_segments);
             
             if oidx > 0 {                       
                 let end = s.s[indices[idx]..indices[idx + oidx]].to_owned() + elide;

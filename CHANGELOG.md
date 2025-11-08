@@ -7,8 +7,10 @@
 - fix image alpha.
 - add image from_base64.
 - add render to_base64.
-- add Auto fit font size in Paragraph: fit size minimum And if that doesn't work, cut and elide.
-- add skip_warning_overflowed: Skip the page size exceeded warning when the paragraph exceeds the layout.
+- add `fit_font_size_to` in `Style`: autofit font size to a minimum size... And if that doesn't work, cut and elide.
+- add `skip_warning_overflowed` in `Context`: Skip the page size exceeded warning when the paragraph exceeds the layout.
+- add `dash pattern to LineStyle`. `set_dash`, `with_dash`,  `set_gap`, `with_gap`, `set_dash2`, `with_dash2`, `set_gap2`, `with_gap2`,
+- add `FramedElement::with_line_style_trbl`
 
 # Unreleased
 

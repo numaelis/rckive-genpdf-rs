@@ -80,7 +80,7 @@ impl Image {
             })
         // }
     }
-    
+    ///  Creates a new image from base64
     pub fn from_base64(base64_string: &str) -> Result<Self, Error> {        
         let raw_base64_content = if base64_string.starts_with("data:image/") {
             let comma_index = base64_string
