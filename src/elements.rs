@@ -448,7 +448,8 @@ impl Element for Break {
         style: Style,
     ) -> Result<RenderResult, Error> {
         let mut result = RenderResult::default();
-        if self.lines <= 0.0 {
+        ///allow line break in negative
+        if self.lines == 0.0 {
             return Ok(result);
         }
         let line_height = style.line_height(&context.font_cache);
