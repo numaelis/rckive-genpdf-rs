@@ -175,12 +175,36 @@ impl<E: IntoBoxedElement> iter::Extend<E> for LinearLayout {
 #[derive(Clone, Debug, Default)]
 pub struct Text {
     text: StyledString,
+    /// leave out
+    orphan: bool,
+    orphan_position: Position,
 }
 
 impl Text {
     /// Creates a new instance with the given styled string.
     pub fn new(text: impl Into<StyledString>) -> Text {
-        Text { text: text.into() }
+        Text { text: text.into(), orphan: false, orphan_position: Position::default()}
+    }
+    /// Sets the orphan
+    pub fn set_orphan(&mut self, orphan: bool) {
+        self.orphan = orphan;
+    }
+
+    /// Sets the orphan of this text and returns the text.
+    pub fn with_orphan(mut self, orphan: bool) -> Self {
+        self.set_orphan(orphan);
+        self
+    }
+    
+    /// Sets the position
+    pub fn set_orphan_position(&mut self, x: impl Into<Mm>, y: impl Into<Mm>) {
+        self.orphan_position = Position::new(x,y);
+    }
+
+    /// Sets the position of this text and returns the text.
+    pub fn with_position(mut self, x: impl Into<Mm>, y: impl Into<Mm>) -> Self {
+        self.set_orphan_position(x,y);
+        self
     }
 }
 
@@ -193,18 +217,32 @@ impl Element for Text {
     ) -> Result<RenderResult, Error> {
         let mut result = RenderResult::default();
         style.merge(self.text.style);
-        if area.print_str(
-            &context.font_cache,
-            Position::default(),
-            style,
-            &self.text.s,
-        )? {
-            result.size = Size::new(
-                style.str_width(&context.font_cache, &self.text.s),
-                style.line_height(&context.font_cache),
-            );
-        } else {
-            result.has_more = true;
+        /// If it is an orphan, allow movement with relative positioning.
+        if !self.orphan  {
+            if area.print_str(
+                &context.font_cache,
+                Position::default(),
+                style,
+                &self.text.s,
+            )? {
+                result.size = Size::new(
+                    style.str_width(&context.font_cache, &self.text.s),
+                    style.line_height(&context.font_cache),
+                );
+            } else {
+                result.has_more = true;
+            }
+        }else{            
+            if area.print_str(
+                &context.font_cache,                
+                Position::new(self.orphan_position.x, self.orphan_position.y),
+                style,
+                &self.text.s,
+            )? {
+                
+            } else {
+                
+            }
         }
         Ok(result)
     }
