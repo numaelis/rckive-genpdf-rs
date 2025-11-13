@@ -11,6 +11,8 @@
 - add `skip_warning_overflowed` in `Context`: Skip the page size exceeded warning when the paragraph exceeds the layout.
 - add `dash pattern to LineStyle`. `set_dash`, `with_dash`,  `set_gap`, `with_gap`, `set_dash2`, `with_dash2`, `set_gap2`, `with_gap2`,
 - add `FramedElement::with_line_style_trbl`
+- add allow line break in negative.
+- Allow leaving the text element orphaned, to use it as a watermark: `orphan`: bool  `orphan_position`: Position in `Text`
 
 # Unreleased
 
