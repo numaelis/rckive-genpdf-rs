@@ -13,6 +13,12 @@
 - add `FramedElement::with_line_style_trbl`
 - add allow line break in negative.
 - Allow leaving the text element orphaned, to use it as a watermark: `orphan`: bool  `orphan_position`: Position in `Text`
+- Allow leaving the LinearLayout orphaned, to use it as a experimental footer or multipurpose: `orphan`: bool  `orphan_position`: Position 
+- add right() and left() in `Margins`
+- add extra_layout in Document: to use an extra layer if necessary, without margins.
+- add footer_cb in `SimplePageDecorator` : an experimental footer, for use with layout orphan, see in genpdf-json.
+- add area_footer in the decorate_page parameters: Another area without bottom margins is needed to render the footer.
+- add get_height in `Paragraph`: for use in calculating the footer height in genpdf-json.
 
 # Unreleased
 
