@@ -97,6 +97,9 @@ impl IntoBoxedElement for Box<dyn Element> {
 pub struct LinearLayout {
     elements: Vec<Box<dyn Element>>,
     render_idx: usize,
+    /// leave out
+    orphan: bool,
+    orphan_position: Position,
 }
 
 impl LinearLayout {
@@ -104,6 +107,8 @@ impl LinearLayout {
         LinearLayout {
             elements: Vec::new(),
             render_idx: 0,
+            orphan: false, 
+            orphan_position: Position::default(),
         }
     }
 
@@ -122,6 +127,36 @@ impl LinearLayout {
         self.push(element);
         self
     }
+    
+    /// Sets the orphan
+    pub fn set_orphan(&mut self, orphan: bool) {
+        self.orphan = orphan;
+    }
+
+    /// Sets the orphan of this layout and returns the text.
+    pub fn with_orphan(mut self, orphan: bool) -> Self {
+        self.set_orphan(orphan);
+        self
+    }
+    
+    /// Sets the position
+    pub fn set_orphan_position(&mut self, x: impl Into<Mm>, y: impl Into<Mm>) {
+        self.orphan_position = Position::new(x,y);
+    }
+
+    /// Sets the position of this layout and returns the text.
+    pub fn with_position(mut self, x: impl Into<Mm>, y: impl Into<Mm>) -> Self {
+        self.set_orphan_position(x,y);
+        self
+    }
+    
+    /// get info is renderable
+    pub fn is_renderable(&mut self) -> bool {
+        if self.elements.len() > 0 && self.render_idx == 0 {
+            return true;
+        }
+        false
+    }
 
     fn render_vertical(
         &mut self,
@@ -130,16 +165,28 @@ impl LinearLayout {
         style: Style,
     ) -> Result<RenderResult, Error> {
         let mut result = RenderResult::default();
-        while area.size().height > Mm(0.0) && self.render_idx < self.elements.len() {
-            let element_result =
-                self.elements[self.render_idx].render(context, area.clone(), style)?;
-            area.add_offset(Position::new(0, element_result.size.height));
-            result.size = result.size.stack_vertical(element_result.size);
-            if element_result.has_more {
-                result.has_more = true;
-                return Ok(result);
+        if !self.orphan  {
+            while area.size().height > Mm(0.0) && self.render_idx < self.elements.len() {
+                let element_result =
+                    self.elements[self.render_idx].render(context, area.clone(), style)?;
+                area.add_offset(Position::new(0, element_result.size.height));
+                result.size = result.size.stack_vertical(element_result.size);
+                if element_result.has_more {
+                    result.has_more = true;
+                    return Ok(result);
+                }
+                self.render_idx += 1;
             }
-            self.render_idx += 1;
+        }else{            
+            let mut new_area = area.clone();            
+            new_area.add_offset(Position::new(self.orphan_position.x, self.orphan_position.y));
+            // while new_area.size().height > Mm(0.0) && self.render_idx < self.elements.len() {
+            while self.render_idx < self.elements.len() {
+                let element_result =
+                    self.elements[self.render_idx].render(context, new_area.clone(), style)?;               
+                new_area.add_offset(Position::new(0, element_result.size.height));                
+                self.render_idx += 1;
+            }
         }
         result.has_more = self.render_idx < self.elements.len();
         Ok(result)
@@ -217,7 +264,7 @@ impl Element for Text {
     ) -> Result<RenderResult, Error> {
         let mut result = RenderResult::default();
         style.merge(self.text.style);
-        /// If it is an orphan, allow movement with relative positioning.
+        // If it is an orphan, allow movement with relative positioning.
         if !self.orphan  {
             if area.print_str(
                 &context.font_cache,
@@ -355,6 +402,34 @@ impl Paragraph {
             self.style_applied = true;
         }
     }
+    
+    /// Knowing the height of a paragraph: is necessary to adjust margins and be able to use a footer.
+    pub fn get_height(
+        &mut self,
+        context: &Context,
+        // mut area: render::Area<'_>,
+        width: impl Into<Mm>,
+        // _style: Style,
+       ) -> Mm {
+           let mut result = Mm(0.0);
+            if self.words.is_empty() {
+                if self.text.is_empty() {
+                    return result;
+                }
+                self.words = wrap::Words::new(mem::take(&mut self.text)).collect();
+            }
+            let words = self.words.iter().map(Into::into);            
+            let mut wrapper = wrap::Wrapper::new(words, context, width.into());
+            
+            for (line, _delta) in &mut wrapper {
+                let metrics = line
+                    .iter()
+                    .map(|s| s.style.metrics(&context.font_cache))
+                    .fold(fonts::Metrics::default(), |max, m| max.max(&m));
+                result+=metrics.line_height;
+            }
+            result
+       }
 }
 
 impl Element for Paragraph {
@@ -486,7 +561,7 @@ impl Element for Break {
         style: Style,
     ) -> Result<RenderResult, Error> {
         let mut result = RenderResult::default();
-        ///allow line break in negative
+        //allow line break in negative
         if self.lines == 0.0 {
             return Ok(result);
         }

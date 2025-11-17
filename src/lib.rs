@@ -491,6 +491,17 @@ impl Margins {
         let all = all.into();
         Margins::trbl(all, all, all, all)
     }
+    
+    /// get right margin
+    pub fn right(&self) -> Mm {
+        self.right
+    }
+    
+    /// get left margin
+    pub fn left(&self) -> Mm {
+        self.left
+    }
+    
 }
 
 impl<T: Into<Mm>, R: Into<Mm>, B: Into<Mm>, L: Into<Mm>> From<(T, R, B, L)> for Margins {
@@ -560,6 +571,8 @@ pub struct Document {
     conformance: Option<printpdf::PdfConformance>,
     creation_date: Option<printpdf::OffsetDateTime>,
     modification_date: Option<printpdf::OffsetDateTime>,
+    /// add LinearLayout, multipurpose, for loading from json
+    extra_layout: elements::LinearLayout,
 }
 
 impl Document {
@@ -576,6 +589,7 @@ impl Document {
             conformance: None,
             creation_date: None,
             modification_date: None,
+            extra_layout: elements::LinearLayout::vertical(),
         }
     }
     /// Skip the page size exceeded warning
@@ -604,6 +618,11 @@ impl Document {
     /// [`load_font_family`]: #method.load_font_family
     pub fn font_cache(&self) -> &fonts::FontCache {
         &self.context.font_cache
+    }
+    
+    /// add get context from doc 
+    pub fn context(&self) -> &Context {
+        &self.context
     }
 
     /// Activates hyphenation and sets the hyphentor to use.
@@ -696,7 +715,11 @@ impl Document {
     pub fn push<E: elements::IntoBoxedElement>(&mut self, element: E) {
         self.root.push(element);
     }
-
+    /// add elements to another layer without margins
+    pub fn extra_push<E: elements::IntoBoxedElement>(&mut self, element: E) {
+        self.extra_layout.push(element);
+    }
+    
     /// Renders this document into a PDF file and writes it to the given writer.
     ///
     /// The given writer is always wrapped in a buffered writer.  For details on the rendering
@@ -716,9 +739,16 @@ impl Document {
         self.context.font_cache.load_pdf_fonts(&renderer)?;
         loop {
             let mut area = renderer.last_page().last_layer().area();
+            let mut area2 = renderer.last_page().last_layer().area();
             if let Some(decorator) = &mut self.decorator {
-                area = decorator.decorate_page(&self.context, area, self.style)?;
+                area = decorator.decorate_page(&self.context, area, area2.clone(), self.style)?;
             }
+            // add multipurpose extra for load from json
+            if self.extra_layout.is_renderable() {
+                let mut area3 = renderer.last_page().last_layer().area();
+                let _result2 = self.extra_layout.render(&self.context, area3.clone(), self.style)?;   
+            }
+
             let result = self.root.render(&self.context, area, self.style)?;
             if result.has_more {
                 if result.size == Size::new(0, 0) {
@@ -802,6 +832,7 @@ pub trait PageDecorator {
         &mut self,
         context: &Context,
         area: render::Area<'a>,
+        area_footer: render::Area<'a>,
         style: style::Style,
     ) -> Result<render::Area<'a>, error::Error>;
 }
@@ -817,11 +848,14 @@ type HeaderCallback = Box<dyn Fn(usize) -> Box<dyn Element>>;
 ///
 /// [`set_margins`]: #method.set_margins
 /// [`set_header`]: #method.set_header
+/// ['set_footer']: #method.set_footer
 #[derive(Default)]
 pub struct SimplePageDecorator {
     page: usize,
     margins: Option<Margins>,
     header_cb: Option<HeaderCallback>,
+    // add footer experimental with layout orphan
+    footer_cb: Option<HeaderCallback>,
 }
 
 impl SimplePageDecorator {
@@ -850,6 +884,16 @@ impl SimplePageDecorator {
         // We manually box the return type of the callback so that it is easier to write closures.
         self.header_cb = Some(Box::new(move |page| Box::new(cb(page))));
     }
+    
+    ///experimental  footer, The idea is to use an orphaned linear layout
+    pub fn set_footer<F, E>(&mut self, cb: F)
+    where
+        F: Fn(usize) -> E + 'static,
+        E: Element + 'static,
+    {
+        // We manually box the return type of the callback so that it is easier to write closures.
+        self.footer_cb = Some(Box::new(move |page| Box::new(cb(page))));
+    }
 }
 
 impl PageDecorator for SimplePageDecorator {
@@ -857,16 +901,24 @@ impl PageDecorator for SimplePageDecorator {
         &mut self,
         context: &Context,
         mut area: render::Area<'a>,
+        mut area_footer: render::Area<'a>,
         style: style::Style,
     ) -> Result<render::Area<'a>, error::Error> {
         self.page += 1;
         if let Some(margins) = self.margins {
             area.add_margins(margins);
+            let footer_margins = Margins::trbl(0.0,margins.right(),0.0,margins.left());
+            area_footer.add_margins(footer_margins);
         }
         if let Some(cb) = &self.header_cb {
             let mut element = cb(self.page);
             let result = element.render(context, area.clone(), style)?;
             area.add_offset(Position::new(0, result.size.height));
+        }
+        if let Some(fcb) = &self.footer_cb {
+            let mut element = fcb(self.page);
+            let result = element.render(context, area_footer.clone(), style)?;
+            area_footer.add_offset(Position::new(0, result.size.height));
         }
         Ok(area)
     }
