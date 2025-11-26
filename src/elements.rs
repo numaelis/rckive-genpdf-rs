@@ -833,7 +833,7 @@ impl<E: Element> Element for FramedElement<E> {
 
         if self.is_first {
             result.size.height += line_thickness;
-            if self.right == true && self.left == true && self.top == true && self.bottom == true{
+            if self.right == true && self.left == true && self.top == true && self.bottom == true && self.line_style.dash() == 0{
                 frame_area.draw_line(
                     vec![bottom_right, top_right, top_left, bottom_left],
                     self.line_style,
@@ -859,7 +859,7 @@ impl<E: Element> Element for FramedElement<E> {
         }
         if !result.has_more {
             result.size.height += line_thickness;
-            if self.right == true && self.left == true && self.top == true && self.bottom == true{
+            if self.right == true && self.left == true && self.top == true && self.bottom == true  && self.line_style.dash() == 0{
                 frame_area.draw_line(
                     vec![top_left, bottom_left, bottom_right, top_right],
                     self.line_style,
@@ -886,7 +886,7 @@ impl<E: Element> Element for FramedElement<E> {
                 frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
             }
             if self.right{
-                frame_area.draw_line(vec![top_right, bottom_right], self.line_style);
+                frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
             }
         }
 
