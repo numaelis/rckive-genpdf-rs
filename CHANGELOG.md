@@ -1,3 +1,6 @@
+# v0.4.2 (2025-11-25)
+- Fixing frame line order for dash pattern
+
 # v0.4.1 (2025-11-03)
 
 - Add Improvements: In paragraphs, force the word to be split in two and apply elide if necessary. 
