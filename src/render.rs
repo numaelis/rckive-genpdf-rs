@@ -360,6 +360,29 @@ impl<'p> Layer<'p> {
         };
         self.data.layer.add_line(line);
     }
+    
+    fn add_poligon_shape<I>(&self, points: I, color: Option<Color>)
+    where
+        I: IntoIterator<Item = LayerPosition>,
+    {
+        let line_points: Vec<_> = points
+            .into_iter()
+            .map(|pos| (self.transform_position(pos).into(), false))
+            .collect();
+        self.data.layer.save_graphics_state();
+        let poligon = printpdf::Polygon {
+            rings: vec![line_points],
+            mode: printpdf::path::PaintMode::FillStroke,
+            winding_order: printpdf::path::WindingOrder::NonZero,
+        };
+        
+        self.data.layer.set_blend_mode(printpdf::BlendMode::Seperable(printpdf::SeperableBlendMode::Multiply));
+        self.data.layer.set_fill_color(color.unwrap_or(Color::Rgb(255, 255, 255)).into());
+        self.data.layer.set_outline_thickness(0.0);
+        self.data.layer.set_outline_color(color.unwrap_or(Color::Rgb(255, 255, 255)).into());
+        self.data.layer.add_polygon(poligon);
+        self.data.layer.restore_graphics_state();
+    }
 
     fn set_fill_color(&self, color: Option<Color>) {
         if self.data.update_fill_color(color) {
@@ -625,7 +648,19 @@ impl<'p> Area<'p> {
         self.layer
             .add_line_shape(points.into_iter().map(|pos| self.position(pos)));
     }
-
+    
+    
+    /// Draws a poligon background with the given points.
+    ///
+    /// The points are relative to the upper left corner of the area.
+    pub fn draw_background<I>(&self, points: I, color: Color)
+    where
+        I: IntoIterator<Item = Position>,
+    {                         
+        self.layer
+            .add_poligon_shape(points.into_iter().map(|pos| self.position(pos)), Some(color));
+    }
+    
     /// Tries to draw the given string at the given position and returns `true` if the area was
     /// large enough to draw the string.
     ///
