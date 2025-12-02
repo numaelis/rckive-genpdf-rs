@@ -717,3 +717,44 @@ impl LineStyle {
         self.gap2.unwrap_or(0)        
     }
 }
+
+/// A style for a background, used in shapes.
+///
+/// The style consists of:
+/// - the color of the line, see [`Color`][] (defaults to white)
+///
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct BackgroundStyle {    
+    color: Color,   
+}
+
+impl Default for BackgroundStyle {
+    fn default() -> BackgroundStyle {
+        BackgroundStyle {            
+            color: Color::Rgb(255, 255, 255),          
+        }
+    }
+}
+
+impl BackgroundStyle {
+    /// Creates a new background style with default values.
+    pub fn new() -> BackgroundStyle {
+        BackgroundStyle::default()
+    }
+    
+    /// Sets the background color.
+    pub fn set_color(&mut self, color: Color) {
+        self.color = color;
+    }
+
+    /// Sets the background color and returns the background style.
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.set_color(color);
+        self
+    }
+
+    /// Returns the background color.
+    pub fn color(&self) -> Color {
+        self.color
+    }
+}

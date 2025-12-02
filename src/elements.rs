@@ -47,7 +47,7 @@ use std::mem;
 use crate::error::{Error, ErrorKind};
 use crate::fonts;
 use crate::render;
-use crate::style::{LineStyle, Style, StyledString};
+use crate::style::{LineStyle, Style, StyledString, BackgroundStyle};
 use crate::wrap;
 use crate::{Alignment, Context, Element, Margins, Mm, Position, RenderResult, Size};
 
@@ -753,6 +753,8 @@ pub struct FramedElement<E: Element> {
     right: bool,
     top: bool,
     bottom: bool,
+    background: bool,
+    background_style: BackgroundStyle,
 }
 
 impl<E: Element> FramedElement<E> {
@@ -772,6 +774,8 @@ impl<E: Element> FramedElement<E> {
             right: true,
             top: true,
             bottom: true,
+            background: false,
+            background_style: BackgroundStyle::new(),
         }
     }
     ///Creates a new framed element that wraps the given element,
@@ -785,7 +789,37 @@ impl<E: Element> FramedElement<E> {
             right: r,
             top: t,
             bottom: b,
+            background: false,
+            background_style: BackgroundStyle::new(),
         }
+    }
+    ///Creates a new framed element that wraps the given element,
+    /// and with the given line style and top, right, bottom, left and background
+    pub fn with_line_style_trbl_and_background(
+        element: E, line_style: impl Into<LineStyle>, 
+        t: bool, r: bool, b: bool, l: bool, 
+        background: bool, background_style: impl Into<BackgroundStyle>) -> FramedElement<E> {
+        Self {
+            is_first: true,
+            element,
+            line_style: line_style.into(),
+            left: l,
+            right: r,
+            top: t,
+            bottom: b,
+            background: background,
+            background_style: background_style.into(),
+        }
+    }
+    /// Sets background of this frame.
+    pub fn set_background(&mut self, background: bool, background_style: impl Into<BackgroundStyle>){
+        self.background = background;
+        self.background_style = background_style.into();
+    }
+    /// Sets background of this frame and returns the frame.
+    pub fn with_background(mut self, background_style: impl Into<BackgroundStyle>)-> Self {
+        self.set_background(true, background_style);
+        self
     }
 }
 
@@ -838,6 +872,7 @@ impl<E: Element> Element for FramedElement<E> {
                     vec![bottom_right, top_right, top_left, bottom_left],
                     self.line_style,
                 );
+                
             }else{
                 if self.right {
                     let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
@@ -854,6 +889,12 @@ impl<E: Element> Element for FramedElement<E> {
                     let bottom_left = Position::new(0, frame_area.size().height + line_offset);
                     frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
                 }
+            }
+            if self.background {
+                frame_area.draw_background(
+                    vec![bottom_right, top_right, top_left, bottom_left],
+                    self.background_style.color(),
+                );
             }
             
         }
@@ -880,6 +921,12 @@ impl<E: Element> Element for FramedElement<E> {
                     let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
                     frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
                 }
+            }
+            if self.background {
+                frame_area.draw_background(
+                    vec![top_left, bottom_left, bottom_right, top_right],
+                    self.background_style.color(),
+                );
             }
         } else {
             if self.left {

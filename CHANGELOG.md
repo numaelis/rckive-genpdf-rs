@@ -1,3 +1,12 @@
+# v0.4.3 (2025-12-02)
+- Adding background to the frame, thanks to the advanced graphical options of `printpdf-rs`.
+- In the `Area` add `draw_background`.
+- In the `Layer` add `add_poligon_shape`, Selecting print pdf::Blend Mode required.
+- In the `Style` add `BackgroundStyle`, with a `color` property.
+- In the `FramedElement` add `background`: bool and `background_style`: `BackgroundStyle`.
+- Add funtion `with_line_style_trbl_and_background`, `set_background` and `with_background` in impl `FramedElement`.
+- update the render and functions of the frame element.
+
 # v0.4.2 (2025-11-25)
 - Fixing frame line order for dash pattern
 
