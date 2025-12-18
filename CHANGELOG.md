@@ -1,3 +1,6 @@
+# v0.4.4 (2025-12-18)
+- allow assigning the `line_spacing` of each style to the element. This would allow for different elements with their respective line spacing.
+
 # v0.4.3 (2025-12-02)
 - Adding background to the frame, thanks to the advanced graphical options of `printpdf-rs`.
 - In the `Area` add `draw_background`.

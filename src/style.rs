@@ -128,6 +128,9 @@ impl Style {
         if let Some(font_size) = style.font_size {
             self.font_size = Some(font_size);
         }
+        if let Some(line_spacing) = style.line_spacing {
+            self.line_spacing = Some(line_spacing);
+        }
         if let Some(color) = style.color {
             self.color = Some(color);
         }
