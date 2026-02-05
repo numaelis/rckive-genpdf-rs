@@ -571,8 +571,17 @@ pub struct Document {
     conformance: Option<printpdf::PdfConformance>,
     creation_date: Option<printpdf::OffsetDateTime>,
     modification_date: Option<printpdf::OffsetDateTime>,
-    /// add LinearLayout, multipurpose, for loading from json
+    // add LinearLayout, multipurpose, for loading from json
     extra_layout: elements::LinearLayout,
+    // add page frame and line style
+    page_frame: bool,
+    page_frame_line_style: style::LineStyle,
+    header_frame: bool,
+    header_frame_line_style: style::LineStyle,
+    footer_frame: bool,
+    footer_frame_line_style: style::LineStyle,
+    //an approximate rec
+    rec_footer: (Position, Position),
 }
 
 impl Document {
@@ -590,8 +599,39 @@ impl Document {
             creation_date: None,
             modification_date: None,
             extra_layout: elements::LinearLayout::vertical(),
+            page_frame: false,
+            page_frame_line_style: style::LineStyle::new(),
+            header_frame: false,
+            header_frame_line_style: style::LineStyle::new(),
+            footer_frame: false,
+            footer_frame_line_style: style::LineStyle::new(),
+            rec_footer: (Position::new(0.0,0.0), Position::new(0.0,0.0)),
         }
     }
+    
+    /// Set rec footer
+    pub fn set_rec_footer(&mut self, pos_ini: Position, pos_end: Position){
+        self.rec_footer = (pos_ini, pos_end);
+    }  
+    
+    /// Set page frame and style
+    pub fn set_page_frame_line_style(&mut self, line_style: style::LineStyle){
+        self.page_frame = true;
+        self.page_frame_line_style = line_style;
+    }     
+    
+    /// Set header frame and style
+    pub fn set_header_frame_line_style(&mut self, line_style: style::LineStyle){
+        self.header_frame = true;
+        self.header_frame_line_style = line_style;
+    }
+    
+    /// Set footer frame and style
+    pub fn set_footer_frame_line_style(&mut self, line_style: style::LineStyle){
+        self.footer_frame = true;
+        self.footer_frame_line_style = line_style;
+    }
+    
     /// Skip the page size exceeded warning
     pub fn set_skip_warning_overflowed(&mut self, skip: bool){
         self.context.skip_warning_overflowed = skip;
@@ -741,7 +781,11 @@ impl Document {
             let mut area = renderer.last_page().last_layer().area();
             let mut area2 = renderer.last_page().last_layer().area();
             if let Some(decorator) = &mut self.decorator {
-                area = decorator.decorate_page(&self.context, area, area2.clone(), self.style)?;
+                area = decorator.decorate_page(&self.context, area, area2.clone(), self.style, 
+                                               self.page_frame, self.page_frame_line_style.clone(),
+                                               self.header_frame, self.header_frame_line_style,
+                                               self.footer_frame, self.footer_frame_line_style,
+                                               self.rec_footer)?;
             }
             // add multipurpose extra for load from json
             if self.extra_layout.is_renderable() {
@@ -834,6 +878,14 @@ pub trait PageDecorator {
         area: render::Area<'a>,
         area_footer: render::Area<'a>,
         style: style::Style,
+        //add page frame
+        page_frame: bool,
+        page_frame_line_style: style::LineStyle,
+        header_frame: bool,
+        header_frame_line_style: style::LineStyle,
+        footer_frame: bool,
+        footer_frame_line_style: style::LineStyle,
+        rec_footer: (Position, Position),
     ) -> Result<render::Area<'a>, error::Error>;
 }
 
@@ -903,22 +955,61 @@ impl PageDecorator for SimplePageDecorator {
         mut area: render::Area<'a>,
         mut area_footer: render::Area<'a>,
         style: style::Style,
+        page_frame: bool,
+        page_frame_line_style: style::LineStyle,
+        header_frame: bool,
+        header_frame_line_style: style::LineStyle,
+        footer_frame: bool,
+        footer_frame_line_style: style::LineStyle,
+        rec_footer: (Position, Position),
     ) -> Result<render::Area<'a>, error::Error> {
         self.page += 1;
         if let Some(margins) = self.margins {
             area.add_margins(margins);
             let footer_margins = Margins::trbl(0.0,margins.right(),0.0,margins.left());
-            area_footer.add_margins(footer_margins);
+            area_footer.add_margins(footer_margins);            
         }
         if let Some(cb) = &self.header_cb {
             let mut element = cb(self.page);
             let result = element.render(context, area.clone(), style)?;
             area.add_offset(Position::new(0, result.size.height));
+            if header_frame {
+                let top_left = Position::new(0.0, result.size.height*-1.0);
+                let top_right = Position::new(area.size().width, result.size.height*-1.0);
+                let bottom_left = Position::new(0.0, 0.0);
+                let bottom_right = Position::new(area.size().width, 0.0);
+                area.draw_line(
+                            vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
+                            header_frame_line_style,
+                        );
+            }
+        }
+        // Draw the page frame.
+        if page_frame {
+            let mut frame_area = area.clone();  
+            let top_left = Position::new(0.0, 0);
+            let top_right = Position::new(frame_area.size().width, 0);
+            let bottom_left = Position::new(0.0, frame_area.size().height);
+            let bottom_right = Position::new(frame_area.size().width, frame_area.size().height);
+            frame_area.draw_line(
+                        vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
+                        page_frame_line_style,
+                    );
         }
         if let Some(fcb) = &self.footer_cb {
             let mut element = fcb(self.page);
             let result = element.render(context, area_footer.clone(), style)?;
             area_footer.add_offset(Position::new(0, result.size.height));
+            if footer_frame {
+                let top_left = Position::new(0.0, rec_footer.0.y);
+                let top_right = Position::new(area_footer.size().width, rec_footer.0.y);
+                let bottom_left = Position::new(0.0, rec_footer.0.y + rec_footer.1.y);
+                let bottom_right = Position::new(area_footer.size().width, rec_footer.0.y + rec_footer.1.y);
+                area_footer.draw_line(
+                            vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
+                            footer_frame_line_style,
+                        );
+            }                        
         }
         Ok(area)
     }
