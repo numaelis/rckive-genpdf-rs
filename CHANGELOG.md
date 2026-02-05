@@ -1,3 +1,12 @@
+# v0.4.5 (2026-02-05)
+- Add page frame, footer frame and header frame.
+- In the `Document` add `page_frame: bool`, `page_frame_line_style: style::LineStyle`,
+                      `header_frame: bool`, `header_frame_line_style: style::LineStyle`,
+                      `footer_frame: bool`, `footer_frame_line_style: style::LineStyle`,
+                      `rec_footer: (Position, Position)`
+  add setter's
+- In the `PageDecorator` Add the same as in document and implement the direct frame with `area.draw_line`
+
 # v0.4.4 (2025-12-18)
 - allow assigning the `line_spacing` of each style to the element. This would allow for different elements with their respective line spacing.
 
