@@ -1,9 +1,9 @@
 # v0.4.5 (2026-02-05)
-- Add page frame, footer frame and header frame.
+- Add page frame, footer frame and header frame. And frame width offset
 - In the `Document` add `page_frame: bool`, `page_frame_line_style: style::LineStyle`,
                       `header_frame: bool`, `header_frame_line_style: style::LineStyle`,
                       `footer_frame: bool`, `footer_frame_line_style: style::LineStyle`,
-                      `rec_footer: (Position, Position)`
+                      `rec_footer: (Position, Position), page_frame_width_offset: Mm::from(0.0),`
   add setter's
 - In the `PageDecorator` Add the same as in document and implement the direct frame with `area.draw_line`
 
