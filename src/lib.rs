@@ -582,6 +582,8 @@ pub struct Document {
     footer_frame_line_style: style::LineStyle,
     //an approximate rec
     rec_footer: (Position, Position),
+    // add page frame width offset
+    page_frame_width_offset: Mm,
 }
 
 impl Document {
@@ -606,7 +608,13 @@ impl Document {
             footer_frame: false,
             footer_frame_line_style: style::LineStyle::new(),
             rec_footer: (Position::new(0.0,0.0), Position::new(0.0,0.0)),
+            page_frame_width_offset: Mm::from(0.0),
         }
+    }
+    
+    /// Set frame width offset
+    pub fn set_page_frame_width_offset(&mut self, offset: impl Into<Mm>) {
+        self.page_frame_width_offset = offset.into();
     }
     
     /// Set rec footer
@@ -785,7 +793,7 @@ impl Document {
                                                self.page_frame, self.page_frame_line_style.clone(),
                                                self.header_frame, self.header_frame_line_style,
                                                self.footer_frame, self.footer_frame_line_style,
-                                               self.rec_footer)?;
+                                               self.rec_footer, self.page_frame_width_offset)?;
             }
             // add multipurpose extra for load from json
             if self.extra_layout.is_renderable() {
@@ -886,6 +894,7 @@ pub trait PageDecorator {
         footer_frame: bool,
         footer_frame_line_style: style::LineStyle,
         rec_footer: (Position, Position),
+        page_frame_width_offset: Mm,
     ) -> Result<render::Area<'a>, error::Error>;
 }
 
@@ -962,6 +971,7 @@ impl PageDecorator for SimplePageDecorator {
         footer_frame: bool,
         footer_frame_line_style: style::LineStyle,
         rec_footer: (Position, Position),
+        page_frame_width_offset: Mm,
     ) -> Result<render::Area<'a>, error::Error> {
         self.page += 1;
         if let Some(margins) = self.margins {
@@ -974,10 +984,10 @@ impl PageDecorator for SimplePageDecorator {
             let result = element.render(context, area.clone(), style)?;
             area.add_offset(Position::new(0, result.size.height));
             if header_frame {
-                let top_left = Position::new(0.0, result.size.height*-1.0);
-                let top_right = Position::new(area.size().width, result.size.height*-1.0);
-                let bottom_left = Position::new(0.0, 0.0);
-                let bottom_right = Position::new(area.size().width, 0.0);
+                let top_left = Position::new(Mm(0.0) + (page_frame_width_offset * -1.0), result.size.height*-1.0);
+                let top_right = Position::new(area.size().width - (page_frame_width_offset * -1.0), result.size.height*-1.0);
+                let bottom_left = Position::new(Mm(0.0) + (page_frame_width_offset * -1.0), 0.0);
+                let bottom_right = Position::new(area.size().width - (page_frame_width_offset * -1.0), 0.0);
                 area.draw_line(
                             vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
                             header_frame_line_style,
@@ -987,10 +997,10 @@ impl PageDecorator for SimplePageDecorator {
         // Draw the page frame.
         if page_frame {
             let mut frame_area = area.clone();  
-            let top_left = Position::new(0.0, 0);
-            let top_right = Position::new(frame_area.size().width, 0);
-            let bottom_left = Position::new(0.0, frame_area.size().height);
-            let bottom_right = Position::new(frame_area.size().width, frame_area.size().height);
+            let top_left = Position::new(Mm(0.0) + (page_frame_width_offset * -1.0), 0);
+            let top_right = Position::new(frame_area.size().width - (page_frame_width_offset * -1.0), 0);
+            let bottom_left = Position::new(Mm(0.0) + (page_frame_width_offset * -1.0), frame_area.size().height);
+            let bottom_right = Position::new(frame_area.size().width - (page_frame_width_offset * -1.0), frame_area.size().height);
             frame_area.draw_line(
                         vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
                         page_frame_line_style,
@@ -1001,10 +1011,10 @@ impl PageDecorator for SimplePageDecorator {
             let result = element.render(context, area_footer.clone(), style)?;
             area_footer.add_offset(Position::new(0, result.size.height));
             if footer_frame {
-                let top_left = Position::new(0.0, rec_footer.0.y);
-                let top_right = Position::new(area_footer.size().width, rec_footer.0.y);
-                let bottom_left = Position::new(0.0, rec_footer.0.y + rec_footer.1.y);
-                let bottom_right = Position::new(area_footer.size().width, rec_footer.0.y + rec_footer.1.y);
+                let top_left = Position::new(Mm(0.0) + (page_frame_width_offset * -1.0), rec_footer.0.y);
+                let top_right = Position::new(area_footer.size().width - (page_frame_width_offset * -1.0), rec_footer.0.y);
+                let bottom_left = Position::new(Mm(0.0) + (page_frame_width_offset * -1.0), rec_footer.0.y + rec_footer.1.y);
+                let bottom_right = Position::new(area_footer.size().width - (page_frame_width_offset * -1.0), rec_footer.0.y + rec_footer.1.y);
                 area_footer.draw_line(
                             vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
                             footer_frame_line_style,
