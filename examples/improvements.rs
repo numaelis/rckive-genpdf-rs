@@ -12,12 +12,12 @@
 
 use std::env;
 
-use rckive_genpdf::Alignment;
-use rckive_genpdf::Element as _;
-use rckive_genpdf::{elements, fonts, style};
-use rckive_genpdf::Margins;
-use rckive_genpdf::Position;
-use rckive_genpdf::style::BackgroundStyle;
+use numaelis_rckive_genpdf::Alignment;
+use numaelis_rckive_genpdf::Element as _;
+use numaelis_rckive_genpdf::{elements, fonts, style};
+use numaelis_rckive_genpdf::Margins;
+use numaelis_rckive_genpdf::Position;
+use numaelis_rckive_genpdf::style::BackgroundStyle;
 
 
 const FONT_DIRS: &[&str] = &[
@@ -39,8 +39,8 @@ fn main() {
         .expect("Failed to load the monospace font family");
     
     ////////// Frame Element dash //////
-    let mut doc = rckive_genpdf::Document::new(default_font.clone());
-    doc.set_title("rckive_genpdf Demo Document");
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font.clone());
+    doc.set_title("numaelis_rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.25);
 
@@ -56,7 +56,7 @@ fn main() {
                                                 .with_gap(1).with_gap2(0);                                                   
         
     doc.push(
-        elements::Paragraph::new("rckive_genpdf Demo Document")
+        elements::Paragraph::new("numaelis_rckive_genpdf Demo Document")
             .aligned(Alignment::Center)
             .styled(style::Style::new().bold().with_font_size(20))
             .framed(line_style.clone()),
@@ -77,12 +77,12 @@ fn main() {
         
     /////////////   Page Frame /////////////
         
-    let mut doc = rckive_genpdf::Document::new(default_font.clone());
-    doc.set_title("rckive_genpdf Demo Document");
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font.clone());
+    doc.set_title("numaelis_rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.25);
     
-    let mut decorator = rckive_genpdf::SimplePageDecorator::new();
+    let mut decorator = numaelis_rckive_genpdf::SimplePageDecorator::new();
     decorator.set_margins(10);
     decorator.set_header(|page| {
         let mut layout = elements::LinearLayout::vertical();
@@ -109,12 +109,12 @@ fn main() {
         
     /////////// footer ///////
         
-    let mut doc = rckive_genpdf::Document::new(default_font.clone());
-    doc.set_title("rckive_genpdf Demo Document");
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font.clone());
+    doc.set_title("numaelis_rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.25);
     
-    let mut decorator = rckive_genpdf::SimplePageDecorator::new();
+    let mut decorator = numaelis_rckive_genpdf::SimplePageDecorator::new();
     
     //Currently, the footer is created manually using layout orphan.
         
@@ -158,11 +158,11 @@ fn main() {
     
     /////////// fit_font_size //////////
     
-    let mut doc = rckive_genpdf::Document::new(default_font.clone());
-    doc.set_title("rckive_genpdf Demo Document");
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font.clone());
+    doc.set_title("numaelis_rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.25);
-    let mut decorator = rckive_genpdf::SimplePageDecorator::new();
+    let mut decorator = numaelis_rckive_genpdf::SimplePageDecorator::new();
     decorator.set_margins(10);
     doc.set_page_decorator(decorator);
     let mut table = elements::TableLayout::new(vec![1, 5]);
@@ -188,11 +188,11 @@ fn main() {
         
     /////////// background element //////////
     
-    let mut doc = rckive_genpdf::Document::new(default_font.clone());
-    doc.set_title("rckive_genpdf Demo Document");
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font.clone());
+    doc.set_title("numaelis_rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(0.9);
-    let mut decorator = rckive_genpdf::SimplePageDecorator::new();
+    let mut decorator = numaelis_rckive_genpdf::SimplePageDecorator::new();
     decorator.set_margins(10);
     doc.set_page_decorator(decorator);    
     
