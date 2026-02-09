@@ -1,6 +1,6 @@
 # rckive-genpdf-rs
 
-<!--> This is a fork of [genpdf-rs][upstream] by [RCKIVE](rckive.com).-->
+<!-- This is a fork of [genpdf-rs][upstream] by [RCKIVE](rckive.com).-->
 
 > This is a fork of rckive-genpdf-rs [RCKIVE](rckive.com) to provide support for genpdf-json-rs https://github.com/numaelis/genpdf-json-rs
 
