@@ -2,18 +2,19 @@
 authors = [
     "Martijn Arts <martijn@rckive.com>",
     "Robin Krahl <robin.krahl@ireas.org>",
+    "Numael Garay <mantrixsoft@gmail.com>",
 ]
 categories = ["text-processing"]
 description = "User-friendly PDF generator written in pure Rust"
 documentation = "https://docs.rs/genpdf"
 edition = "2021"
 exclude = [".builds/*"]
-homepage = "https://github.com/RCKIVE/rckive-genpdf-rs"
+homepage = "https://github.com/numaelis/rckive-genpdf-rs"
 keywords = ["pdf", "text", "layout"]
 license = "EUPL-1.2"
-name = "rckive-genpdf"
+name = "numaelis-rckive-genpdf"
 readme = "README.md"
-repository = "https://github.com/RCKIVE/rckive-genpdf-rs"
+repository = "https://github.com/numaelis/rckive-genpdf-rs"
 version = "0.4.5"
 
 [[example]]
