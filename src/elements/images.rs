@@ -59,26 +59,27 @@ pub struct Image {
 
     /// DPI override if you know better. Defaults to `printpdf`’s default of 300 dpi.
     dpi: Option<f32>,
+    
+    /// Frame in the image
+    source_frame: Option<style::LineStyle>,
+    
+    /// offset frame, Negative decrements.
+    source_frame_offset: Mm,
 }
 
 impl Image {
     /// Creates a new image from an already loaded image.
-    pub fn from_dynamic_image(data: printpdf::image_crate::DynamicImage) -> Result<Self, Error> {
-        // if data.color().has_alpha() {
-        //     Err(Error::new(
-        //         "Images with an alpha channel are not supported",
-        //         ErrorKind::InvalidData,
-        //     ))
-        // } else {
-            Ok(Image {
-                data,
-                alignment: Alignment::default(),
-                position: None,
-                scale: Scale::default(),
-                rotation: Rotation::default(),
-                dpi: None,
-            })
-        // }
+    pub fn from_dynamic_image(data: printpdf::image_crate::DynamicImage) -> Result<Self, Error> {        
+        Ok(Image {
+            data,
+            alignment: Alignment::default(),
+            position: None,
+            scale: Scale::default(),
+            rotation: Rotation::default(),
+            dpi: None,
+            source_frame: None,
+            source_frame_offset: Mm::from(0.0),
+        })        
     }
     ///  Creates a new image from base64
     pub fn from_base64(base64_string: &str) -> Result<Self, Error> {        
@@ -100,6 +101,8 @@ impl Image {
                         scale: Scale::default(),
                         rotation: Rotation::default(),
                         dpi: None,
+                        source_frame: None,
+                        source_frame_offset: Mm::from(0.0),
                     })                
             }
             Err(error) => {
@@ -175,7 +178,29 @@ impl Image {
         self.set_alignment(alignment);
         self
     }
+    
+    /// Sets frame line style the image.
+    pub fn set_source_frame(&mut self, line_style: style::LineStyle) {
+        self.source_frame = Some(line_style);
+    }
 
+    /// Sets frame line style the image and returns it.
+    pub fn with_source_frame(mut self, line_style: style::LineStyle) -> Self {
+        self.set_source_frame(line_style);
+        self
+    }
+    
+    /// Sets offset frame. Negative decrements.
+    pub fn set_source_frame_offset(&mut self, offset: impl Into<Mm>) {
+        self.source_frame_offset = offset.into();
+    }
+
+    /// Sets offset frame and returns it. Negative decrements.
+    pub fn with_source_frame_offset(mut self, offset: impl Into<Mm>) -> Self {
+        self.set_source_frame_offset(offset);
+        self
+    }
+        
     /// Determines the offset from left-side based on provided Alignment.
     fn get_offset(&self, width: Mm, max_width: Mm) -> Position {
         let horizontal_offset = match self.alignment {
@@ -251,7 +276,19 @@ impl Element for Image {
 
         // Insert/render the image with the overridden/calculated position.
         area.add_image(&self.data, position, self.scale, self.rotation, self.dpi);
-
+        
+        // Add the frame to the image with offset. Rotation isn't included for now.
+        if let Some(line_style)  = self.source_frame {
+            let bottom_left = Position::new(position.x + (self.source_frame_offset * -1.0) , position.y - (self.source_frame_offset * -1.0));
+            let bottom_right = Position::new(position.x + bb_size.width - (self.source_frame_offset * -1.0), position.y - (self.source_frame_offset * -1.0));
+            let top_left = Position::new(position.x + (self.source_frame_offset * -1.0), position.y - bb_size.height + (self.source_frame_offset * -1.0));
+            let top_right = Position::new(position.x + bb_size.width - (self.source_frame_offset * -1.0), position.y - bb_size.height + (self.source_frame_offset * -1.0));
+            area.draw_line(
+                        vec![bottom_right, top_right, top_left, bottom_left, bottom_right],
+                        line_style,
+                    );
+            
+        };
         // Always false as we can't safely do this unless we want to try to do "sub-images".
         // This is technically possible with the `image` package, but it is potentially more
         // work than necessary. I'd rather support an "Auto-Scale" method to fit to area.

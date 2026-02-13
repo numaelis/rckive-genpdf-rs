@@ -1,3 +1,8 @@
+# v0.4.6 (2026-02)
+- Add frame around the image outline.
+  In the struct Image add `source_frame: Option<style::LineStyle>` and `source_frame_offset: Mm`
+  funtions:  set_source_frame(LineStyle), with_source_frame(LineStyle), set_source_frame_offset(f32), with_source_frame_offset(f32)
+
 # v0.4.5 (2026-02-05)
 - Add page frame, footer frame and header frame. And frame width offset
 - In the `Document` add `page_frame: bool`, `page_frame_line_style: style::LineStyle`,

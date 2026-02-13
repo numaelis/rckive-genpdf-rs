@@ -15,7 +15,7 @@ license = "EUPL-1.2"
 name = "numaelis-rckive-genpdf"
 readme = "README.md"
 repository = "https://github.com/numaelis/rckive-genpdf-rs"
-version = "0.4.5"
+version = "0.4.6"
 
 [[example]]
 name = "images"
