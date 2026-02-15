@@ -212,7 +212,7 @@ impl Image {
     }
 
     /// Calculates a guess for the size of the image based on the dpi/pixel-count/scale.
-    fn get_size(&self) -> Size {
+    pub fn get_size(&self) -> Size {
         let mmpi: f32 = 25.4; // millimeters per inch
                               // Assume 300 DPI to be consistent with printpdf.
         let dpi: f32 = self.dpi.unwrap_or(300.0);
