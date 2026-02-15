@@ -239,4 +239,10 @@ fn main() {
     doc.push(table);
     doc.render_to_file("background.pdf")
         .expect("Failed to write output file");
+    
+    ////////// image source_frame /////////
+    //let img = elements::Image::from_path(IMAGE_PATH_JPG)
+    //    .with_source_frame(style::LineStyle::new().with_thickness(0.2))
+    //    .with_source_frame_offset(0.5)
+    //    .expect("invalid image");
 }
