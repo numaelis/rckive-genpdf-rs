@@ -1,3 +1,10 @@
+# v0.4.7 (2026-)
+- Fixing background in the `FramedElement`, the color was added twice, and it turned out darker.
+- Adding border radius in `FramedElement` (including the background): add `border_radius: f32` and `set_border_radius` and `with_border_radius` methods
+- If the border radius exceeds the maximum allowed value, it is set to that maximum.
+- Add `add_line_shape_bezier` and `add_poligon_shape_bezier` to `<Layer>`
+- Add `draw_line_bezier` and `draw_background_bezier` to `<Area>`
+
 # v0.4.6 (2026-02-14)
 - Add frame around the image outline.
   In the struct Image add `source_frame: Option<style::LineStyle>` and `source_frame_offset: Mm`
