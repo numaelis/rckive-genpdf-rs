@@ -361,6 +361,23 @@ impl<'p> Layer<'p> {
         self.data.layer.add_line(line);
     }
     
+    fn add_line_shape_bezier<I>(&self, points: I, bezier: &[bool])
+    where
+        I: IntoIterator<Item = LayerPosition>,
+    {
+        let line_points: Vec<_> = points
+            .into_iter()
+            .enumerate()
+            .map(|(index, pos)| (self.transform_position(pos).into(), bezier[index]))
+            .collect();
+            
+        let line = printpdf::Line {
+            points: line_points,
+            is_closed: false,
+        };
+        self.data.layer.add_line(line);
+    }
+    
     fn add_poligon_shape<I>(&self, points: I, color: Option<Color>)
     where
         I: IntoIterator<Item = LayerPosition>,
@@ -368,6 +385,30 @@ impl<'p> Layer<'p> {
         let line_points: Vec<_> = points
             .into_iter()
             .map(|pos| (self.transform_position(pos).into(), false))
+            .collect();
+        self.data.layer.save_graphics_state();
+        let poligon = printpdf::Polygon {
+            rings: vec![line_points],
+            mode: printpdf::path::PaintMode::FillStroke,
+            winding_order: printpdf::path::WindingOrder::NonZero,
+        };
+        
+        self.data.layer.set_blend_mode(printpdf::BlendMode::Seperable(printpdf::SeperableBlendMode::Multiply));
+        self.data.layer.set_fill_color(color.unwrap_or(Color::Rgb(255, 255, 255)).into());
+        self.data.layer.set_outline_thickness(0.0);
+        self.data.layer.set_outline_color(color.unwrap_or(Color::Rgb(255, 255, 255)).into());
+        self.data.layer.add_polygon(poligon);
+        self.data.layer.restore_graphics_state();
+    }
+    
+    fn add_poligon_shape_bezier<I>(&self, points: I, color: Option<Color>, bezier: &[bool])
+    where
+        I: IntoIterator<Item = LayerPosition>,
+    {
+        let line_points: Vec<_> = points
+            .into_iter()
+            .enumerate()
+            .map(|(index,pos)| (self.transform_position(pos).into(), bezier[index]))
             .collect();
         self.data.layer.save_graphics_state();
         let poligon = printpdf::Polygon {
@@ -649,6 +690,21 @@ impl<'p> Area<'p> {
             .add_line_shape(points.into_iter().map(|pos| self.position(pos)));
     }
     
+    /// Draws a line with the given points and the given line style.
+    ///
+    /// The points are relative to the upper left corner of the area.
+    ///
+    /// with bezier curves
+    pub fn draw_line_bezier<I>(&self, points: I, line_style: LineStyle, bezier: &[bool])
+    where
+        I: IntoIterator<Item = Position>,
+    {
+        self.layer.set_outline_thickness(line_style.thickness());
+        self.layer.set_outline_color(line_style.color());
+        self.layer.set_line_dash_pattern(line_style.dash(), line_style.gap(), line_style.dash2(), line_style.gap2());                   
+        self.layer
+            .add_line_shape_bezier(points.into_iter().map(|pos| self.position(pos)), bezier);
+    }    
     
     /// Draws a poligon background with the given points.
     ///
@@ -659,6 +715,19 @@ impl<'p> Area<'p> {
     {                         
         self.layer
             .add_poligon_shape(points.into_iter().map(|pos| self.position(pos)), Some(color));
+    }
+    
+    /// Draws a poligon background with the given points.
+    ///
+    /// The points are relative to the upper left corner of the area.
+    ///
+    /// with bezier curves
+    pub fn draw_background_bezier<I>(&self, points: I, color: Color, bezier: &[bool])
+    where
+        I: IntoIterator<Item = Position>,
+    {                         
+        self.layer
+            .add_poligon_shape_bezier(points.into_iter().map(|pos| self.position(pos)), Some(color), bezier);
     }
     
     /// Tries to draw the given string at the given position and returns `true` if the area was

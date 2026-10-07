@@ -755,6 +755,7 @@ pub struct FramedElement<E: Element> {
     bottom: bool,
     background: bool,
     background_style: BackgroundStyle,
+    border_radius: f32,
 }
 
 impl<E: Element> FramedElement<E> {
@@ -776,6 +777,7 @@ impl<E: Element> FramedElement<E> {
             bottom: true,
             background: false,
             background_style: BackgroundStyle::new(),
+            border_radius: 0.0,
         }
     }
     ///Creates a new framed element that wraps the given element,
@@ -791,6 +793,7 @@ impl<E: Element> FramedElement<E> {
             bottom: b,
             background: false,
             background_style: BackgroundStyle::new(),
+            border_radius: 0.0,
         }
     }
     ///Creates a new framed element that wraps the given element,
@@ -809,6 +812,7 @@ impl<E: Element> FramedElement<E> {
             bottom: b,
             background: background,
             background_style: background_style.into(),
+            border_radius: 0.0,
         }
     }
     /// Sets background of this frame.
@@ -821,7 +825,18 @@ impl<E: Element> FramedElement<E> {
         self.set_background(true, background_style);
         self
     }
+    /// Set border radius of this frame.
+    pub fn set_border_radius(&mut self, radius: f32){
+        self.border_radius = radius;
+    }
+    /// Set border radius of this frame and return the frame.
+    pub fn with_border_radius(mut self, radius: f32)-> Self {
+        self.set_border_radius(radius);
+        self
+    }
 }
+
+const CCIRCLE: f32 = 0.551915024494;
 
 impl<E: Element> Element for FramedElement<E> {
     fn render(
@@ -864,79 +879,244 @@ impl<E: Element> Element for FramedElement<E> {
         let top_right = Position::new(frame_area.size().width, 0);
         let bottom_left = Position::new(0, frame_area.size().height);
         let bottom_right = Position::new(frame_area.size().width, frame_area.size().height);
-
-        if self.is_first {
-            result.size.height += line_thickness;
-            if self.right == true && self.left == true && self.top == true && self.bottom == true && self.line_style.dash() == 0{
-                frame_area.draw_line(
-                    vec![bottom_right, top_right, top_left, bottom_left],
-                    self.line_style,
-                );
-                
-            }else{
-                if self.right {
-                    let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
-                    let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
-                    frame_area.draw_line(vec![bottom_right, top_right], self.line_style);                    
-                }
-                if self.top {
-                    let top_right = Position::new(frame_area.size().width + line_offset, 0);
-                    let top_left = Position::new(line_offset*-1.0, 0);
-                    frame_area.draw_line(vec![top_right, top_left], self.line_style);
-                }
-                if self.left {
-                    let top_left = Position::new(0, line_offset*-1.0);
-                    let bottom_left = Position::new(0, frame_area.size().height + line_offset);
-                    frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
-                }
-            }
-            if self.background {
-                frame_area.draw_background(
-                    vec![bottom_right, top_right, top_left, bottom_left],
-                    self.background_style.color(),
-                );
-            }
+        
+        // If there is a border radius, create the points.
+        if self.border_radius > 0.0 {
             
+            let max_radius_width = (top_right.x - top_left.x).0 / 2.0;
+            let max_radius_height = (bottom_right.y - top_right.y).0 / 2.0;
+            let max_radius = if max_radius_width < max_radius_height { max_radius_width } else { max_radius_height };         
+            if self.border_radius > max_radius{
+                self.border_radius = max_radius;
+            }
+            let top_left = Position::default();
+            let top_right = Position::new(frame_area.size().width, 0);
+            let bottom_left = Position::new(0, frame_area.size().height);
+            let bottom_right = Position::new(frame_area.size().width, frame_area.size().height);
+
+            let radius = self.border_radius;
+    
+            let x_top_right = top_right.x.0;
+            let y_top_right = top_right.y.0;
+            
+            let x_bottom_right = bottom_right.x.0;
+            let y_bottom_right = bottom_right.y.0;
+            
+            let x_top_left = top_left.x.0;
+            let y_top_left = top_left.y.0;
+            
+            let x_bottom_left = bottom_left.x.0;
+            let y_bottom_left = bottom_left.y.0;            
+    
+            let top_right_hor = Position::new(Mm(x_top_right - radius),  Mm(y_top_right));
+            let top_right_corner_1 = Position::new(Mm((CCIRCLE * radius) + x_top_right - radius), Mm((-1.0 * radius) + y_top_right + radius));
+            let top_right_corner_2 = Position::new(Mm((1.0 * radius) + x_top_right - radius), Mm((-CCIRCLE * radius) + y_top_right + radius));
+            let top_right_ver = Position::new(Mm(x_top_right), Mm(y_top_right + radius));
+            
+            let top_left_ver = Position::new(Mm(x_top_left), Mm(y_top_left + radius));
+            let top_left_corner_1 = Position::new(Mm((-1.0 * radius) + x_top_left + radius), Mm((-CCIRCLE * radius)+ y_top_left + radius));
+            let top_left_corner_2 = Position::new(Mm((-CCIRCLE * radius)+ x_top_left + radius), Mm((-1.0 * radius) + y_top_left + radius));
+            let top_left_hor = Position::new(Mm(x_top_left + radius), Mm(y_top_left));
+            
+            let bottom_right_ver = Position::new(Mm(x_bottom_right), Mm(y_bottom_right - radius));
+            let bottom_right_corner_1 = Position::new(Mm((1.0 * radius) + x_bottom_right - radius), Mm((CCIRCLE * radius)+ y_bottom_right - radius));
+            let bottom_right_corner_2 = Position::new(Mm((CCIRCLE * radius)+ x_bottom_right - radius), Mm((1.0 * radius) + y_bottom_right - radius));
+            let bottom_right_hor = Position::new(Mm(x_bottom_right - radius), Mm(y_bottom_right));
+            
+            let bottom_left_hor = Position::new(Mm(x_bottom_left + radius), Mm(y_bottom_left));
+            let bottom_left_corner_1 = Position::new(Mm((-CCIRCLE * radius) + x_bottom_left + radius), Mm((1.0 * radius)+ y_bottom_left - radius));
+            let bottom_left_corner_2 = Position::new(Mm((-1.0 * radius)+ x_bottom_left + radius), Mm((CCIRCLE * radius) + y_bottom_left - radius));
+            let bottom_left_ver = Position::new(Mm(x_bottom_left), Mm(y_bottom_left - radius));
+                                    
+            if self.is_first {
+                result.size.height += line_thickness;
+                if self.right == true && self.left == true && self.top == true && self.bottom == true {
+                    let bezier = vec![false, true, true, true, false, true, true, true, false, false];
+                    frame_area.draw_line_bezier(
+                        vec![bottom_right_ver, 
+                            top_right_ver, top_right_corner_2, top_right_corner_1, top_right_hor, 
+                            top_left_hor, top_left_corner_2, top_left_corner_1, top_left_ver,
+                            bottom_left_ver],
+                        self.line_style,
+                        &bezier
+                    );
+                }else{
+                    if self.right {                        
+                        let bezier = vec![false, true, true, true, false];
+                        frame_area.draw_line_bezier(
+                            vec![bottom_right_ver,
+                                top_right_ver, top_right_corner_2, top_right_corner_1, top_right_hor],
+                            self.line_style,
+                            &bezier);
+                    }
+                    if self.top {                        
+                        let bezier = vec![true, true, true, false, true, true, true, false];
+                        frame_area.draw_line_bezier(
+                            vec![top_right_ver, top_right_corner_2, top_right_corner_1, top_right_hor,
+                                top_left_hor, top_left_corner_2, top_left_corner_1, top_left_ver],
+                            self.line_style,
+                            &bezier);
+                    }
+                    if self.left {                        
+                        let bezier = vec![true, true, true, false, false];
+                        frame_area.draw_line_bezier(
+                            vec![top_left_hor, top_left_corner_2, top_left_corner_1, top_left_ver,
+                                bottom_left_ver],
+                            self.line_style,
+                            &bezier);
+                    }
+                }
+            }
+            if !result.has_more {
+                result.size.height += line_thickness;
+                if self.right == true && self.left == true && self.top == true && self.bottom == true {
+                    let bezier = vec![false, true, true, true, false, true, true, true, false, false];
+                    frame_area.draw_line_bezier(
+                        vec![top_left_ver,
+                             bottom_left_ver, bottom_left_corner_2, bottom_left_corner_1, bottom_left_hor,
+                             bottom_right_hor, bottom_right_corner_2, bottom_right_corner_1, bottom_right_ver,
+                             top_right_ver],
+                        self.line_style,
+                        &bezier
+                    );
+                }else{
+                    if self.left {                        
+                        let bezier = vec![false, true, true, true, false];
+                        frame_area.draw_line_bezier(
+                            vec![top_left_ver,
+                                bottom_left_ver, bottom_left_corner_2, bottom_left_corner_1, bottom_left_hor],
+                            self.line_style,
+                            &bezier);
+                    }
+                    if self.bottom {                        
+                        let bezier = vec![true, true, true, false, true, true, true, false];
+                        frame_area.draw_line_bezier(
+                            vec![bottom_left_ver, bottom_left_corner_2, bottom_left_corner_1, bottom_left_hor,
+                                bottom_right_hor, bottom_right_corner_2, bottom_right_corner_1, bottom_right_ver],
+                            self.line_style,
+                            &bezier);
+                    }
+                    if self.right {
+                        let bezier = vec![true, true, true, false, true];
+                        frame_area.draw_line_bezier(
+                            vec![bottom_right_hor, bottom_right_corner_2, bottom_right_corner_1, bottom_right_ver,
+                                top_right_ver],
+                            self.line_style,
+                            &bezier);
+                    }
+                }
+                if self.background {
+                    //Avoid layering the background twice, because the colors will combine.
+                    let bezier = vec![true, true, true, false, true, true, true, false, true, true, true, false, true, true, true, false];                    
+                    frame_area.draw_background_bezier(
+                        vec![                             
+                            bottom_left_ver, bottom_left_corner_2, bottom_left_corner_1, bottom_left_hor,
+                            bottom_right_hor, bottom_right_corner_2, bottom_right_corner_1, bottom_right_ver,
+                            top_right_ver, top_right_corner_2, top_right_corner_1, top_right_hor,
+                            top_left_hor, top_left_corner_2, top_left_corner_1, top_left_ver,
+                            ],
+                        self.background_style.color(),
+                        &bezier
+                    );
+                }
+            } else {
+                if self.left {                    
+                    frame_area.draw_line(vec![top_left_ver, bottom_left_ver], self.line_style);                    
+                }
+                if self.right{
+                    frame_area.draw_line(vec![bottom_right_ver, top_right_ver], self.line_style);                    
+                }
+                if self.background {
+                    //Avoid layering the background twice, because the colors will combine.
+                    let bezier = vec![true, true, true, false, true, true, true, false, true, true, true, false, true, true, true, false];                    
+                    frame_area.draw_background_bezier(
+                        vec![                             
+                            bottom_left_ver, bottom_left_corner_2, bottom_left_corner_1, bottom_left_hor,
+                            bottom_right_hor, bottom_right_corner_2, bottom_right_corner_1, bottom_right_ver,
+                            top_right_ver, top_right_corner_2, top_right_corner_1, top_right_hor,
+                            top_left_hor, top_left_corner_2, top_left_corner_1, top_left_ver,
+                            ],
+                        self.background_style.color(),
+                        &bezier
+                    );
+                }
+            }
         }
-        if !result.has_more {
-            result.size.height += line_thickness;
-            if self.right == true && self.left == true && self.top == true && self.bottom == true  && self.line_style.dash() == 0{
-                frame_area.draw_line(
-                    vec![top_left, bottom_left, bottom_right, top_right],
-                    self.line_style,
-                );
-            }else{
+        else{
+            if self.is_first {
+                result.size.height += line_thickness;
+                
+                if self.right == true && self.left == true && self.top == true && self.bottom == true && self.line_style.dash() == 0{
+                    frame_area.draw_line(
+                        vec![bottom_right, top_right, top_left, bottom_left],
+                        self.line_style,
+                    );
+                    
+                }else{
+                    if self.right {
+                        let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
+                        let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
+                        frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
+                    }
+                    if self.top {
+                        let top_right = Position::new(frame_area.size().width + line_offset, 0);
+                        let top_left = Position::new(line_offset*-1.0, 0);
+                        frame_area.draw_line(vec![top_right, top_left], self.line_style);
+                    }
+                    if self.left {
+                        let top_left = Position::new(0, line_offset*-1.0);
+                        let bottom_left = Position::new(0, frame_area.size().height + line_offset);
+                        frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
+                    }
+                }
+            }
+            if !result.has_more {
+                result.size.height += line_thickness;
+                if self.right == true && self.left == true && self.top == true && self.bottom == true  && self.line_style.dash() == 0{
+                    frame_area.draw_line(
+                        vec![top_left, bottom_left, bottom_right, top_right],
+                        self.line_style,
+                    );
+                }else{
+                    if self.left {
+                        let top_left = Position::new(0, line_offset*-1.0);
+                        let bottom_left = Position::new(0, frame_area.size().height + line_offset);
+                        frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
+                    }
+                    if self.bottom {
+                        let bottom_left = Position::new(line_offset*-1.0, frame_area.size().height);
+                        let bottom_right = Position::new(frame_area.size().width + line_offset, frame_area.size().height);
+                        frame_area.draw_line(vec![bottom_left, bottom_right], self.line_style);
+                    }
+                    if self.right {
+                        let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
+                        let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
+                        frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
+                    }
+                }
+                if self.background {
+                    //Avoid layering the background twice, because the colors will combine.
+                    frame_area.draw_background(
+                        vec![top_left, bottom_left, bottom_right, top_right],
+                        self.background_style.color(),
+                    );
+                }
+            } else {
                 if self.left {
-                    let top_left = Position::new(0, line_offset*-1.0);
-                    let bottom_left = Position::new(0, frame_area.size().height + line_offset);
                     frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
                 }
-                if self.bottom {
-                    let bottom_left = Position::new(line_offset*-1.0, frame_area.size().height);
-                    let bottom_right = Position::new(frame_area.size().width + line_offset, frame_area.size().height);
-                    frame_area.draw_line(vec![bottom_left, bottom_right], self.line_style);
-                }
-                if self.right {
-                    let bottom_right = Position::new(frame_area.size().width, frame_area.size().height + line_offset);
-                    let top_right = Position::new(frame_area.size().width, line_offset*-1.0);
+                if self.right{
                     frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
                 }
-            }
-            if self.background {
-                frame_area.draw_background(
-                    vec![top_left, bottom_left, bottom_right, top_right],
-                    self.background_style.color(),
-                );
-            }
-        } else {
-            if self.left {
-                frame_area.draw_line(vec![top_left, bottom_left], self.line_style);
-            }
-            if self.right{
-                frame_area.draw_line(vec![bottom_right, top_right], self.line_style);
+                if self.background {
+                    //Avoid layering the background twice, because the colors will combine.
+                    frame_area.draw_background(
+                        vec![bottom_right, top_right, top_left, bottom_left],
+                        self.background_style.color(),
+                    );
+                }
             }
         }
-
         self.is_first = false;
 
         Ok(result)
