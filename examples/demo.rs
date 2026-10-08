@@ -9,9 +9,9 @@
 
 use std::env;
 
-use rckive_genpdf::Alignment;
-use rckive_genpdf::Element as _;
-use rckive_genpdf::{elements, fonts, style};
+use numaelis_rckive_genpdf::Alignment;
+use numaelis_rckive_genpdf::Element as _;
+use numaelis_rckive_genpdf::{elements, fonts, style};
 
 const FONT_DIRS: &[&str] = &[
     "/usr/share/fonts/liberation",
@@ -43,12 +43,12 @@ fn main() {
     let monospace_font = fonts::from_files(font_dir, MONO_FONT_NAME, Some(fonts::Builtin::Courier))
         .expect("Failed to load the monospace font family");
 
-    let mut doc = rckive_genpdf::Document::new(default_font);
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font);
     doc.set_title("rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.25);
 
-    let mut decorator = rckive_genpdf::SimplePageDecorator::new();
+    let mut decorator = numaelis_rckive_genpdf::SimplePageDecorator::new();
     decorator.set_margins(10);
     decorator.set_header(|page| {
         let mut layout = elements::LinearLayout::vertical();
@@ -179,7 +179,7 @@ fn main() {
     doc.push(elements::Paragraph::new("This is right-aligned text.").aligned(Alignment::Right));
     doc.push(
         elements::Paragraph::new("And this paragraph has a frame drawn around it and is colored.")
-            .padded(rckive_genpdf::Margins::vh(0, 1))
+            .padded(numaelis_rckive_genpdf::Margins::vh(0, 1))
             .framed(style::LineStyle::from(style::Color::Rgb(0, 0, 255)).with_thickness(0.3))
             .styled(red),
     );
@@ -241,7 +241,7 @@ fn main() {
                 .element(elements::Paragraph::new("Even lists!"))
                 .element(
                     elements::Paragraph::new("And frames!")
-                        .padded(rckive_genpdf::Margins::vh(0, 1))
+                        .padded(numaelis_rckive_genpdf::Margins::vh(0, 1))
                         .framed(style::LineStyle::new()),
                 ),
         );
@@ -300,7 +300,7 @@ mod images {
 
     const IMAGE_PATH_JPG: &'static str = "examples/images/test_image.jpg";
 
-    pub fn do_image_test(doc: &mut rckive_genpdf::Document) {
+    pub fn do_image_test(doc: &mut numaelis_rckive_genpdf::Document) {
         doc.push(elements::Paragraph::new(
             "Here is an example image with default position/scale:",
         ));
@@ -312,7 +312,7 @@ mod images {
             elements::Image::from_path(IMAGE_PATH_JPG)
                 .expect("Unable to load image")
                 .with_alignment(Alignment::Center)
-                .with_scale(rckive_genpdf::Scale::new(0.5, 2.))
+                .with_scale(numaelis_rckive_genpdf::Scale::new(0.5, 2.))
                 .with_clockwise_rotation(45.0),
         );
         doc.push(elements::Paragraph::new(

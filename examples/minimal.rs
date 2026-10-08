@@ -12,7 +12,7 @@
 
 use std::env;
 
-use rckive_genpdf::{elements, fonts};
+use numaelis_rckive_genpdf::{elements, fonts};
 
 const FONT_DIRS: &[&str] = &[
     "/usr/share/fonts/liberation",
@@ -35,7 +35,7 @@ fn main() {
         fonts::from_files(font_dir, DEFAULT_FONT_NAME, Some(fonts::Builtin::Helvetica))
             .expect("Failed to load the default font family");
 
-    let mut doc = rckive_genpdf::Document::new(default_font);
+    let mut doc = numaelis_rckive_genpdf::Document::new(default_font);
     doc.set_title("rckive_genpdf Demo Document");
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.25);

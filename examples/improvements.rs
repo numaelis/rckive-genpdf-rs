@@ -224,6 +224,7 @@ fn main() {
     );
     
     
+    
     let mut table = elements::TableLayout::new(vec![1, 5]);
     table.set_cell_decorator(elements::FrameCellDecorator::new(true, true, false));
     table
@@ -237,7 +238,77 @@ fn main() {
         .push()
         .expect("Invalid table row");
     doc.push(table);
-    doc.render_to_file("background.pdf")
+    
+    let mut layout3 = elements::FramedElement::with_line_style_trbl_and_background(
+                elements::LinearLayout::vertical().element( 
+                    elements::Paragraph::new("Text")
+                            .styled(style::Effect::Bold)  
+                            .padded(1)
+                ),
+                style::LineStyle::new().with_thickness(0.0), false, false, false, false,
+                true, BackgroundStyle::new().with_color(style::Color::Rgb(200, 240, 120))
+    );
+    doc.push(elements::Break::new(1.5));
+    // border radius
+    layout3.set_border_radius(2.5);
+    doc.push(layout3);
+    doc.push(elements::Break::new(1.5));
+    
+    // more border
+    let mut table_child = elements::TableLayout::new(vec![1, 1]);
+    table_child.set_cell_decorator(
+        elements::FrameCellDecorator::with_line_style(true, true, true,
+                                                       style::LineStyle::new().with_thickness(0.3).with_color(style::Color::Rgb(34, 139, 34)))
+                                   );
+    table_child
+        .row()
+        .element(
+            elements::Paragraph::new("Code").aligned(Alignment::Center).padded(1).styled(style::Effect::Bold)
+            )
+        .element(
+            elements::Paragraph::new("Value").aligned(Alignment::Center).padded(1).styled(style::Effect::Bold)
+        )        
+        .push()
+        .expect("Invalid table row");
+    
+    table_child
+        .row()
+        .element(
+            elements::Paragraph::new("12").aligned(Alignment::Center).padded(1)
+            )
+        .element(
+            elements::Paragraph::new("144").aligned(Alignment::Center).padded(1)
+        )
+        .push()
+        .expect("Invalid table row");
+        
+    let mut layout_child = elements::FramedElement::with_line_style_trbl_and_background(
+            elements::LinearLayout::vertical().element( 
+                table_child
+            ).padded(2),
+            style::LineStyle::new().with_thickness(0.0), false, false, false, false,
+            true, BackgroundStyle::new().with_color(style::Color::Rgb(150, 240, 120))
+    );
+    layout_child.set_border_radius(2.5);
+    
+    let mut table_root = elements::TableLayout::new(vec![3, 2, 3]);
+    table_root.set_cell_decorator(elements::FrameCellDecorator::new(false, false, false));
+    table_root
+        .row()
+        .element(
+            elements::Paragraph::new("")
+            )
+        .element(
+            layout_child
+        )
+        .element(
+            elements::Paragraph::new("")
+        )
+        .push()
+        .expect("Invalid table row");   
+    doc.push(table_root);
+    
+    doc.render_to_file("background_and_border_radius.pdf")
         .expect("Failed to write output file");
     
     ////////// image source_frame /////////

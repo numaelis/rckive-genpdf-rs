@@ -1,4 +1,4 @@
-# v0.4.7 (2026-)
+# v0.4.7 (2026-10-08)
 - Fixing background in the `FramedElement`, the color was added twice, and it turned out darker.
 - Adding border radius in `FramedElement` (including the background): add `border_radius: f32` and `set_border_radius` and `with_border_radius` methods
 - If the border radius exceeds the maximum allowed value, it is set to that maximum.
